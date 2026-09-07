@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/queue_models.dart';
@@ -76,14 +77,17 @@ class QueueApiClient {
 
     if (queueInput == null || tokenInput == null) {
       throw const FormatException(
-        'This QR code does not contain a QueueFlow ticket.',
+        'This QR code does not contain a QueuEx ticket.',
       );
     }
 
     return QueueCredentials(
       queueNumber: parseQueueNumber(queueInput),
       accessToken: normalizeToken(tokenInput),
-      apiBaseUrl: ApiConfig.baseUrl,
+      // Prefer the host embedded in the scanned ticket URL (so a ticket
+      // printed by a different backend instance still resolves correctly);
+      // null falls back to this client's configured baseUrl at request time.
+      apiBaseUrl: _baseUrlFromTicketUri(uri),
     );
   }
 
@@ -163,15 +167,17 @@ class QueueApiClient {
       rethrow;
     } on TimeoutException {
       throw QueueApiException(
-        'QueueFlow API timed out. Make sure the backend is running at $requestBaseUrl.',
+        'QueuEx API timed out. Make sure the backend is running at $requestBaseUrl.',
       );
     } on http.ClientException {
       throw QueueApiException(
-        'Cannot connect to QueueFlow API at $requestBaseUrl.',
+        'Cannot connect to QueuEx API at $requestBaseUrl.',
       );
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[QueuEx DEBUG] $uri failed: ${e.runtimeType}: $e');
+      debugPrint('[QueuEx DEBUG] stack: $st');
       throw QueueApiException(
-        'Cannot reach QueueFlow API. Check your backend server and network.',
+        'Cannot reach QueuEx API. Check your backend server and network.',
       );
     }
   }
@@ -194,15 +200,17 @@ class QueueApiClient {
       rethrow;
     } on TimeoutException {
       throw QueueApiException(
-        'QueueFlow API timed out. Make sure the backend is running at $requestBaseUrl.',
+        'QueuEx API timed out. Make sure the backend is running at $requestBaseUrl.',
       );
     } on http.ClientException {
       throw QueueApiException(
-        'Cannot connect to QueueFlow API at $requestBaseUrl.',
+        'Cannot connect to QueuEx API at $requestBaseUrl.',
       );
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[QueuEx DEBUG] $uri failed: ${e.runtimeType}: $e');
+      debugPrint('[QueuEx DEBUG] stack: $st');
       throw QueueApiException(
-        'Cannot reach QueueFlow API. Check your backend server and network.',
+        'Cannot reach QueuEx API. Check your backend server and network.',
       );
     }
   }
@@ -225,7 +233,7 @@ class QueueApiClient {
 
     if (decoded is! Map) {
       throw const QueueApiException(
-        'QueueFlow API returned an unexpected response.',
+        'QueuEx API returned an unexpected response.',
       );
     }
 
@@ -237,7 +245,7 @@ class QueueApiClient {
     if (message != null && message.toString().trim().isNotEmpty) {
       return message.toString();
     }
-    return 'QueueFlow API request failed.';
+    return 'QueuEx API request failed.';
   }
 
   static String _normalizeBaseUrl(String value) {
