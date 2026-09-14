@@ -11,20 +11,82 @@ class HelpScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: QAppBar(
-        title: 'Help',
+        title: 'Help & Support',
         showBack: true,
         onBack: () => goBack(context),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.greenDark, Color(0xFF1B4D3E)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x10000000),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.support_agent_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Need guidance?',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                          'Review our quick guidelines below to ensure a smooth queue experience.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white70,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
             const SectionLabel('How it works'),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             const _HelpCard(
-              iconBg: AppColors.purpleLight,
-              iconColor: AppColors.purpleDark,
+              iconBg: AppColors.greenLight,
+              iconColor: AppColors.greenDark,
               icon: Icons.access_time_rounded,
               title: 'Camera-confirmed entry',
               body:
@@ -32,7 +94,7 @@ class HelpScreen extends StatelessWidget {
                   'camera with your face visible. Once both are confirmed, '
                   'your real kiosk number shows up here automatically.',
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             const _HelpCard(
               iconBg: AppColors.greenLight,
               iconColor: AppColors.green,
@@ -41,7 +103,7 @@ class HelpScreen extends StatelessWidget {
               body:
                   'Use your queue number and token to track your position anytime.',
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             const _HelpCard(
               iconBg: AppColors.amberLight,
               iconColor: AppColors.amberBright,
@@ -50,7 +112,7 @@ class HelpScreen extends StatelessWidget {
               body:
                   'Return before the no-show countdown ends or your number may be skipped.',
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             const _HelpCard(
               iconBg: AppColors.redLight,
               iconColor: AppColors.redDark,
@@ -80,6 +142,7 @@ class _HelpCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String body;
+
   const _HelpCard({
     required this.iconBg,
     required this.iconColor,
@@ -87,27 +150,36 @@ class _HelpCard extends StatelessWidget {
     required this.title,
     required this.body,
   });
+
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(10),
+    padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
       color: AppColors.white,
-      border: Border.all(color: AppColors.border),
-      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x06000000),
+          blurRadius: 10,
+          offset: Offset(0, 4),
+        ),
+      ],
     ),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 26,
-          height: 26,
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: iconBg,
-            borderRadius: BorderRadius.circular(7),
+            borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(icon, color: iconColor, size: 14),
+          child: Icon(icon, color: iconColor, size: 22),
         ),
-        const SizedBox(width: 9),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,16 +187,17 @@ class _HelpCard extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.dark,
+                  letterSpacing: -0.2,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 6),
               Text(
                 body,
                 style: const TextStyle(
-                  fontSize: 10,
+                  fontSize: 13,
                   color: AppColors.textMuted,
                   height: 1.4,
                 ),

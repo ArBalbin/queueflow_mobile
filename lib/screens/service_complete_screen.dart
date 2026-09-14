@@ -24,74 +24,107 @@ class ServiceCompleteScreen extends StatelessWidget {
         showBack: true,
         onBack: () => goBack(context),
       ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 68,
-              height: 68,
-              decoration: const BoxDecoration(
-                color: AppColors.greenLight,
-                shape: BoxShape.circle,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.greenLight,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.green.withValues(alpha: 0.12),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.green,
+                  size: 42,
+                ),
               ),
-              child: const Icon(
-                Icons.check_circle_outline_rounded,
-                color: Color(0xFF1D9E75),
-                size: 36,
+              const SizedBox(height: 18),
+              const Text(
+                'Service Complete',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.dark,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Service Complete',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.dark,
+              const SizedBox(height: 6),
+              Text(
+                '$queueLabel has been successfully served.\nThank you for your patience!',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textMuted,
+                  height: 1.4,
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '$queueLabel has been served.\nThank you for your patience!',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textMuted,
-                height: 1.5,
+              const SizedBox(height: 24),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x0A000000),
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _SummaryRow(
+                      icon: Icons.confirmation_number_outlined,
+                      label: 'Queue number',
+                      value: queueLabel,
+                    ),
+                    _SummaryRow(
+                      icon: Icons.hourglass_bottom_rounded,
+                      label: 'Total wait',
+                      value: waitTime,
+                    ),
+                    _SummaryRow(
+                      icon: Icons.access_time_rounded,
+                      label: 'Updated at',
+                      value: servedAt,
+                    ),
+                    _SummaryRow(
+                      icon: Icons.storefront_rounded,
+                      label: 'Counter',
+                      value: 'Assigned by staff',
+                      isLast: true,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(10),
+              const SizedBox(height: 28),
+              PrimaryButton(
+                label: 'Back to Home',
+                bg: AppColors.green,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                fontSize: 14,
+                onTap: () => Navigator.pushReplacementNamed(
+                  context,
+                  routeForCurrentQueue(),
+                ),
               ),
-              child: Column(
-                children: [
-                  _SummaryRow(label: 'Queue number', value: queueLabel),
-                  _SummaryRow(label: 'Total wait', value: waitTime),
-                  _SummaryRow(label: 'Updated at', value: servedAt),
-                  const _SummaryRow(
-                    label: 'Counter',
-                    value: 'Assigned by staff',
-                    isLast: true,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            PrimaryButton(
-              label: 'Back to Home',
-              onTap: () => Navigator.pushReplacementNamed(
-                context,
-                routeForCurrentQueue(),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: QBottomNavBar(
@@ -115,38 +148,57 @@ class ServiceCompleteScreen extends StatelessWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
+  final IconData icon;
   final String label;
   final String value;
   final bool isLast;
+
   const _SummaryRow({
+    required this.icon,
     required this.label,
     required this.value,
     this.isLast = false,
   });
+
   @override
   Widget build(BuildContext context) => Column(
     children: [
       Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.greenLight.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 16, color: AppColors.green),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textMuted,
+                ),
+              ),
             ),
             Text(
               value,
               style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
                 color: AppColors.dark,
               ),
             ),
           ],
         ),
       ),
-      if (!isLast) const Divider(height: 1, color: Color(0xFFF0F0F4)),
+      if (!isLast)
+        const Divider(height: 1, color: AppColors.border, thickness: 0.8),
     ],
   );
 }

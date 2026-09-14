@@ -17,14 +17,6 @@ class _Pose {
   const _Pose(this.key, this.prompt);
 }
 
-/// Guided auto-capture face enrollment: no shutter button. The student holds
-/// their face inside the circle and follows the prompt below it; once
-/// they're centered, well-lit, and at the requested angle for a short streak
-/// of frames, the shot is taken automatically and the flow moves to the next
-/// pose. Three poses (center + two opposite turns) give the enrollment
-/// embedding real angle diversity without needing to know which physical
-/// direction ("left"/"right") the device's front camera reports as positive —
-/// the second turn just has to be the opposite sign of the first.
 class FaceCaptureScreen extends StatefulWidget {
   const FaceCaptureScreen({super.key});
 
@@ -104,7 +96,11 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
   }
 
   void _onFrame(CameraImage image) {
-    if (_isBusy || _capturing || _isSubmitting || _controller == null || _detector == null) {
+    if (_isBusy ||
+        _capturing ||
+        _isSubmitting ||
+        _controller == null ||
+        _detector == null) {
       return;
     }
     _isBusy = true;
@@ -141,7 +137,9 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
     final face = faces.reduce(
       (a, b) => a.boundingBox.width > b.boundingBox.width ? a : b,
     );
-    final frameShortSide = image.width < image.height ? image.width : image.height;
+    final frameShortSide = image.width < image.height
+        ? image.width
+        : image.height;
     final faceFraction = face.boundingBox.width / frameShortSide;
 
     if (faceFraction < _minFaceFraction) {
@@ -157,8 +155,9 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
         poseMatches = yaw.abs() <= _centerYawMax;
       case 'turn1':
         poseMatches = yaw.abs() >= _turnYawMin;
-      default: // turn2 — must be past the threshold in the opposite direction from turn1.
-        poseMatches = yaw.abs() >= _turnYawMin &&
+      default:
+        poseMatches =
+            yaw.abs() >= _turnYawMin &&
             (_firstTurnSign == 0 || yaw.sign != _firstTurnSign);
     }
 
@@ -217,16 +216,11 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       });
       try {
         await controller.startImageStream(_onFrame);
-      } catch (_) {
-        // Ignore — the "trouble scanning" manual fallback below stays available.
-      }
+      } catch (_) {}
     }
   }
 
   Future<void> _useManualCameraForCurrentPose() async {
-    // This is the escape hatch a student reaches for when auto-capture is
-    // already failing them, so it must never fail silently — a dead button
-    // at that point leaves them with no way forward at all.
     final XFile? shot;
     try {
       shot = await ImagePicker().pickImage(
@@ -306,10 +300,12 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = _controller;
-    final borderColor = _isAligned ? AppColors.greenBright : AppColors.purpleLight;
+    final borderColor = _isAligned
+        ? AppColors.greenBright
+        : const Color.fromARGB(255, 76, 87, 240);
 
     return Scaffold(
-      backgroundColor: AppColors.dark,
+      backgroundColor: AppColors.greenLight,
       appBar: QAppBar(
         title: 'Register Your Face',
         showBack: true,
@@ -344,17 +340,22 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                     child: SizedBox(
                       width: 280,
                       height: 280,
-                      child: controller != null && controller.value.isInitialized
+                      child:
+                          controller != null && controller.value.isInitialized
                           ? FittedBox(
                               fit: BoxFit.cover,
                               child: SizedBox(
-                                width: controller.value.previewSize?.height ?? 280,
-                                height: controller.value.previewSize?.width ?? 280,
+                                width:
+                                    controller.value.previewSize?.height ?? 280,
+                                height:
+                                    controller.value.previewSize?.width ?? 280,
                                 child: CameraPreview(controller),
                               ),
                             )
                           : const Center(
-                              child: CircularProgressIndicator(color: AppColors.white),
+                              child: CircularProgressIndicator(
+                                color: AppColors.white,
+                              ),
                             ),
                     ),
                   ),
@@ -372,7 +373,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                       _status,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        color: AppColors.white,
+                        color: Color.fromARGB(255, 37, 37, 37),
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
@@ -382,14 +383,21 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                       'Only a derived face signature is stored, never the photos '
                       'themselves.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.textLight, fontSize: 11, height: 1.4),
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 44, 44, 44),
+                        fontSize: 11,
+                        height: 1.4,
+                      ),
                     ),
                     if (_errorMessage != null) ...[
                       const SizedBox(height: 10),
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppColors.red, fontSize: 12),
+                        style: const TextStyle(
+                          color: AppColors.red,
+                          fontSize: 12,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       GestureDetector(
@@ -397,7 +405,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                         child: const Text(
                           'Try again',
                           style: TextStyle(
-                            color: AppColors.purpleLight,
+                            color: AppColors.greenBright,
                             fontSize: 12,
                             decoration: TextDecoration.underline,
                           ),
@@ -410,7 +418,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                         child: const Text(
                           'Trouble scanning? Take this shot manually',
                           style: TextStyle(
-                            color: AppColors.purpleLight,
+                            color: AppColors.greenBright,
                             fontSize: 12,
                             decoration: TextDecoration.underline,
                           ),
@@ -442,7 +450,7 @@ class _StepDot extends StatelessWidget {
         shape: BoxShape.circle,
         color: done
             ? AppColors.greenBright
-            : (active ? AppColors.purple : AppColors.textLight),
+            : (active ? AppColors.green : AppColors.textLight),
       ),
     );
   }

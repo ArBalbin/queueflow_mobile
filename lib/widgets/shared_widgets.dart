@@ -95,7 +95,7 @@ class QueueListItem extends StatelessWidget {
       color: AppColors.white,
       border: Border.all(
         color: highlighted
-            ? (highlightColor ?? AppColors.purple)
+            ? (highlightColor ?? AppColors.green)
             : AppColors.border,
         width: highlighted ? 1.5 : 1,
       ),
@@ -150,6 +150,8 @@ class PrimaryButton extends StatelessWidget {
   final Color? fg;
   final bool outlined;
   final Color? borderColor;
+  final EdgeInsetsGeometry? padding;
+  final double? fontSize;
   const PrimaryButton({
     super.key,
     required this.label,
@@ -158,16 +160,19 @@ class PrimaryButton extends StatelessWidget {
     this.fg,
     this.outlined = false,
     this.borderColor,
+    this.padding,
+    this.fontSize,
   });
   @override
   Widget build(BuildContext context) {
     final bgColor = bg ?? (outlined ? Colors.transparent : AppColors.dark);
     final fgColor = fg ?? (outlined ? AppColors.dark : AppColors.white);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 11),
+        padding: padding ?? const EdgeInsets.symmetric(vertical: 11),
         decoration: BoxDecoration(
           color: bgColor,
           border: outlined
@@ -179,7 +184,7 @@ class PrimaryButton extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: fontSize ?? 12,
             fontWeight: FontWeight.w600,
             color: fgColor,
           ),
@@ -275,7 +280,7 @@ class QueueNumberCard extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 10, color: Color(0x80FFFFFF)),
+          style: const TextStyle(fontSize: 10, color: Color.fromARGB(128, 240, 238, 238)),
         ),
         const SizedBox(height: 3),
         Text(
@@ -295,26 +300,27 @@ class QueueNumberCard extends StatelessWidget {
 }
 
 class QAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
+  final String? title;
   final Color? bgColor;
-  final Color? logoColor;
   final bool showBack;
   final VoidCallback? onBack;
   final List<Widget>? actions;
+
   const QAppBar({
     super.key,
-    required this.title,
+    this.title,
     this.bgColor,
-    this.logoColor,
     this.showBack = false,
     this.onBack,
     this.actions,
   });
+
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
   @override
   Widget build(BuildContext context) => AppBar(
-    backgroundColor: bgColor ?? AppColors.dark,
+    backgroundColor: bgColor ?? AppColors.green,
     automaticallyImplyLeading: false,
     leading: showBack
         ? IconButton(
@@ -324,37 +330,17 @@ class QAppBar extends StatelessWidget implements PreferredSizeWidget {
           )
         : null,
     actions: actions,
-    titleSpacing: showBack ? 0 : 14,
-    title: Row(
-      children: [
-        Container(
-          width: 26,
-          height: 26,
-          decoration: BoxDecoration(
-            color: logoColor ?? AppColors.purple,
-            borderRadius: BorderRadius.circular(7),
-          ),
-          alignment: Alignment.center,
-          child: const Text(
-            'Q',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+    titleSpacing: showBack ? 0 : 20,
+    title: title != null
+        ? Text(
+            title!,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
               color: AppColors.white,
             ),
-          ),
-        ),
-        const SizedBox(width: 9),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.white,
-          ),
-        ),
-      ],
-    ),
+          )
+        : Image.asset('assets/img/Logo.png', height: 24, fit: BoxFit.contain),
   );
 }
 
@@ -370,61 +356,65 @@ class QBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const labels = ['My Queue', 'History', 'Profile', 'Help'];
-    // Sit above the device's own gesture/navigation bar. Without this the
-    // system nav overlaps the tabs and swallows their taps — a Scaffold's
-    // bottomNavigationBar is placed outside the body, so a SafeArea in the
-    // page body does nothing for it.
     final systemInset = MediaQuery.viewPaddingOf(context).bottom;
+    
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE8E8F0))),
-      ),
-      padding: EdgeInsets.fromLTRB(0, 7, 0, 10 + systemInset),
-      child: Row(
-        children: List.generate(4, (i) {
-          final active = i == currentIndex;
-          return Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => onTap(i),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CustomPaint(
-                      painter: _NavIconPainter(index: i, active: active),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    labels[i],
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w500,
-                      color: active
-                          ? AppColors.navActive
-                          : AppColors.navInactive,
-                    ),
-                  ),
-                  if (active) ...[
-                    const SizedBox(height: 1),
-                    Container(
-                      width: 4,
-                      height: 4,
-                      decoration: const BoxDecoration(
-                        color: AppColors.purple,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+      color: Colors.transparent,
+      padding: EdgeInsets.fromLTRB(16, 0, 16, systemInset + 12),
+      child: Container(
+        height: 64,
+        decoration: BoxDecoration(
+          color: AppColors.green,
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          );
-        }),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        child: Row(
+          children: List.generate(4, (i) {
+            final active = i == currentIndex;
+            return Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onTap(i),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: active ? Colors.white : Colors.transparent,
+                    borderRadius: BorderRadius.circular(26),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CustomPaint(
+                          painter: _NavIconPainter(index: i, active: active),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        labels[i],
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: active ? AppColors.green : Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -438,9 +428,10 @@ class _NavIconPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final s = size.width / 22;
-    const activeCol = Color(0xFF7F77DD);
-    const inactiveCol = Color(0xFFABABC0);
-    const inactiveFill = Color(0xFFEEEDFE);
+    final activeCol = AppColors.green;
+    final inactiveCol = Colors.white;
+    final inactiveFill = Colors.white.withValues(alpha: 0.25);
+    final activeFill = AppColors.green.withValues(alpha: 0.2);
     final color = active ? activeCol : inactiveCol;
     final stroke = Paint()
       ..color = color
@@ -457,15 +448,15 @@ class _NavIconPainter extends CustomPainter {
         );
         canvas.drawRRect(
           RRect.fromLTRBR(12 * s, 3 * s, 19 * s, 10 * s, r),
-          Paint()..color = inactiveFill,
+          Paint()..color = active ? activeFill : inactiveFill,
         );
         canvas.drawRRect(
           RRect.fromLTRBR(3 * s, 12 * s, 10 * s, 19 * s, r),
-          Paint()..color = inactiveFill,
+          Paint()..color = active ? activeFill : inactiveFill,
         );
         canvas.drawRRect(
           RRect.fromLTRBR(12 * s, 12 * s, 19 * s, 19 * s, r),
-          Paint()..color = inactiveFill,
+          Paint()..color = active ? activeFill : inactiveFill,
         );
         break;
       case 1:

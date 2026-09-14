@@ -79,11 +79,10 @@ class _NoShowWarningScreenState extends State<NoShowWarningScreen> {
     final snapshot = _snapshot;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: QAppBar(
         title: 'My Queue Status',
         bgColor: const Color(0xFF7A3300),
-        logoColor: const Color(0xFFBA7517),
         showBack: true,
         onBack: () => goBack(context),
       ),
@@ -125,8 +124,8 @@ class _NoShowBody extends StatelessWidget {
     final status = snapshot.status;
     final remaining = status.noshowCountdown ?? 0;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -141,40 +140,67 @@ class _NoShowBody extends StatelessWidget {
               fg: AppColors.amberText,
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              StatTile(
-                value: '${status.aheadCount}',
-                label: 'Ahead of you',
-                valueColor: AppColors.amberBright,
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              border: Border.all(
+                color: AppColors.border.withValues(alpha: 0.8),
               ),
-              const SizedBox(width: 6),
-              StatTile(
-                value: _durationLabel(remaining),
-                label: 'Time remaining',
-                valueColor: AppColors.amberBright,
-              ),
-              const SizedBox(width: 6),
-              StatTile(
-                value: snapshot.activeCounters > 0
-                    ? '${snapshot.activeCounters}'
-                    : '-',
-                label: 'Counters open',
-              ),
-            ],
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x0A000000),
+                  blurRadius: 16,
+                  offset: Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _StatColumn(
+                    icon: Icons.people_alt_rounded,
+                    value: '${status.aheadCount}',
+                    label: 'Ahead',
+                    color: AppColors.amberBright,
+                  ),
+                ),
+                Container(width: 1, height: 36, color: AppColors.border),
+                Expanded(
+                  child: _StatColumn(
+                    icon: Icons.timer_outlined,
+                    value: _durationLabel(remaining),
+                    label: 'Remaining',
+                    color: AppColors.amberBright,
+                  ),
+                ),
+                Container(width: 1, height: 36, color: AppColors.border),
+                Expanded(
+                  child: _StatColumn(
+                    icon: Icons.store_rounded,
+                    value: snapshot.activeCounters > 0
+                        ? '${snapshot.activeCounters}'
+                        : '-',
+                    label: 'Counters',
+                    color: AppColors.dark,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           const AlertBanner(
             text:
-                'You are not detected in the queue area. Return before the countdown ends or your number may be skipped.',
+                'You are not detected in the queue area. Return before the countdown ends or your ticket may be skipped.',
             bg: AppColors.redLight,
             borderColor: AppColors.red,
             dotColor: AppColors.redDark,
             textColor: AppColors.redDark,
           ),
           if (errorMessage != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             AlertBanner(
               text: errorMessage!,
               bg: AppColors.redLight,
@@ -183,57 +209,122 @@ class _NoShowBody extends StatelessWidget {
               textColor: AppColors.redDark,
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: AppColors.white,
-              border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(9),
+              border: Border.all(
+                color: AppColors.border.withValues(alpha: 0.8),
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x0A000000),
+                  blurRadius: 16,
+                  offset: Offset(0, 6),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'No-show countdown',
-                  style: TextStyle(fontSize: 10, color: AppColors.textMuted),
-                ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: (remaining / 180).clamp(0, 1).toDouble(),
-                    backgroundColor: const Color(0xFFF0F0F4),
-                    color: AppColors.red,
-                    minHeight: 5,
-                  ),
-                ),
-                const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '$remaining s remaining',
-                      style: const TextStyle(
-                        fontSize: 9,
-                        color: AppColors.red,
-                        fontWeight: FontWeight.w600,
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.hourglass_bottom_rounded,
+                          size: 16,
+                          color: AppColors.red,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'No-show countdown',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.dark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.redLight,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '$remaining s',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.red,
+                        ),
                       ),
                     ),
-                    const Text(
-                      'QueuEx timer',
-                      style: TextStyle(fontSize: 9, color: AppColors.textMuted),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: (remaining / 180).clamp(0, 1).toDouble(),
+                    backgroundColor: AppColors.border,
+                    color: AppColors.red,
+                    minHeight: 10,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Auto-skipping soon if undetected',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    Text(
+                      'QueuEx protection',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          const Spacer(),
-          PrimaryButton(
-            label: isRefreshing ? 'Checking...' : "I'm here - Refresh Status",
-            bg: AppColors.amberDark,
-            onTap: isRefreshing ? null : () => onRefresh(),
+          const SizedBox(height: 24),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.amberDark.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: PrimaryButton(
+              label: isRefreshing
+                  ? 'Checking Status...'
+                  : "I'm here - Refresh Status",
+              bg: AppColors.amberDark,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              fontSize: 14,
+              onTap: isRefreshing ? null : () => onRefresh(),
+            ),
           ),
         ],
       ),
@@ -248,32 +339,105 @@ class _NoShowBody extends StatelessWidget {
   }
 }
 
+class _StatColumn extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  const _StatColumn({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: color.withValues(alpha: 0.8)),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _EmptyWarningState extends StatelessWidget {
   const _EmptyWarningState();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.warning_amber_rounded,
-            size: 42,
-            color: AppColors.textMuted,
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'No active ticket loaded.',
-            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-          ),
-          const SizedBox(height: 12),
-          PrimaryButton(
-            label: 'Enter Ticket Details',
-            onTap: () => Navigator.pushReplacementNamed(context, '/ticket/lookup'),
-          ),
-        ],
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.amberLight,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.amber.withValues(alpha: 0.15),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.warning_amber_rounded,
+                size: 40,
+                color: AppColors.amberDark,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'No active ticket loaded',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.dark,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Load a ticket to view active status details.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 28),
+            PrimaryButton(
+              label: 'Enter Ticket Details',
+              bg: AppColors.green,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              fontSize: 14,
+              onTap: () =>
+                  Navigator.pushReplacementNamed(context, '/ticket/lookup'),
+            ),
+          ],
+        ),
       ),
     );
   }

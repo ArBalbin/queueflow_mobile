@@ -123,90 +123,98 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: QAppBar(
-        title: 'QueuEx',
         showBack: true,
         onBack: () => Navigator.of(context).pushReplacementNamed(
           StudentSessionStore.isLoggedIn ? '/student/home' : '/student/login',
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 8),
-            const Text(
-              'Check Your Queue',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: AppColors.dark,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 12),
+              const Text(
+                'CHECK YOUR QUEUE',
+                textAlign: TextAlign.center,
+                style: AppText.title,
               ),
-            ),
-            const SizedBox(height: 3),
-            const Text(
-              'Enter your ticket details below',
-              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
-            ),
-            const SizedBox(height: 16),
-
-            _ScanQrButton(onTap: _isLoading ? null : _handleScan),
-            const SizedBox(height: 12),
-
-            // Queue Number Input
-            _InputField(
-              label: 'QUEUE NUMBER',
-              hint: 'e.g. Q004',
-              controller: _queueController,
-              textCapitalization: TextCapitalization.characters,
-            ),
-            const SizedBox(height: 10),
-
-            // Access Token Input
-            _InputField(
-              label: 'ACCESS TOKEN',
-              hint: 'Enter your unique code',
-              controller: _tokenController,
-              isPassword: true,
-              textCapitalization: TextCapitalization.characters,
-            ),
-            const SizedBox(height: 6),
-
-            // Error message
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                _errorMessage!,
-                style: const TextStyle(fontSize: 10, color: AppColors.red),
+              const SizedBox(height: 6),
+              const Text(
+                'Enter your ticket details below',
+                textAlign: TextAlign.center,
+                style: AppText.bodyMuted,
               ),
-              const SizedBox(height: 4),
-            ],
-
-            const SizedBox(height: 10),
-
-            // Login Button
-            _isLoading
-                ? const SizedBox(
-                    height: 42,
-                    child: Center(
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.dark,
+              const SizedBox(height: 28),
+              _ScanQrButton(onTap: _isLoading ? null : _handleScan),
+              const SizedBox(height: 20),
+              Row(
+                children: const [
+                  Expanded(child: Divider(color: AppColors.borderMid)),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: Text('OR', style: TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
+                  ),
+                  Expanded(child: Divider(color: AppColors.borderMid)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _InputField(
+                label: 'QUEUE NUMBER',
+                hint: 'e.g. Q004',
+                controller: _queueController,
+                textCapitalization: TextCapitalization.characters,
+              ),
+              const SizedBox(height: 16),
+              _InputField(
+                label: 'ACCESS TOKEN',
+                hint: 'Enter your unique code',
+                controller: _tokenController,
+                isPassword: true,
+                textCapitalization: TextCapitalization.characters,
+              ),
+              const SizedBox(height: 12),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  _errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12, color: AppColors.red, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 48,
+                        child: Center(
+                          child: SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: AppColors.green,
+                            ),
+                          ),
                         ),
+                      )
+                    : PrimaryButton(
+                        label: 'Check My Status',
+                        bg: AppColors.green,
+                        onTap: _handleLogin,
                       ),
-                    ),
-                  )
-                : PrimaryButton(label: 'Check My Status', onTap: _handleLogin),
-
-            const SizedBox(height: 6),
-            const Text(
-              'Token is shown on your queue slip',
-              style: TextStyle(fontSize: 9, color: AppColors.textLight),
-            ),
-          ],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Token is shown on your queue slip',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11, color: AppColors.textLight),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -227,27 +235,35 @@ class _ScanQrButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 11),
+        padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 16),
         decoration: BoxDecoration(
-          color: enabled ? AppColors.purpleLight : AppColors.border,
-          border: Border.all(color: AppColors.purple),
-          borderRadius: BorderRadius.circular(10),
+          color: enabled ? AppColors.greenLight : AppColors.border,
+          border: Border.all(color: AppColors.green, width: 1.2),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            if (enabled)
+              BoxShadow(
+                color: AppColors.green.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.qr_code_scanner_rounded,
-              size: 17,
-              color: enabled ? AppColors.purpleDark : AppColors.textMuted,
+              size: 22,
+              color: enabled ? AppColors.greenDark : AppColors.textMuted,
             ),
-            const SizedBox(width: 7),
+            const SizedBox(width: 10),
             Text(
               'Scan Ticket QR',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: enabled ? AppColors.purpleDark : AppColors.textMuted,
+                color: enabled ? AppColors.greenDark : AppColors.textMuted,
               ),
             ),
           ],
@@ -281,56 +297,48 @@ class _InputFieldState extends State<_InputField> {
 
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        widget.label,
-        style: const TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textMuted,
-          letterSpacing: 0.5,
-        ),
-      ),
-      const SizedBox(height: 3),
-      Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          border: Border.all(color: AppColors.borderMid),
-          borderRadius: BorderRadius.circular(9),
-        ),
-        child: TextField(
-          controller: widget.controller,
-          obscureText: widget.isPassword && _obscure,
-          textCapitalization: widget.textCapitalization,
-          style: const TextStyle(fontSize: 13, color: AppColors.dark),
-          decoration: InputDecoration(
-            hintText: widget.hint,
-            hintStyle: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textLight,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.label, style: AppText.overline),
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              border: Border.all(color: AppColors.borderMid),
+              borderRadius: BorderRadius.circular(14),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 11,
-              vertical: 10,
+            child: TextField(
+              controller: widget.controller,
+              obscureText: widget.isPassword && _obscure,
+              textCapitalization: widget.textCapitalization,
+              style: const TextStyle(fontSize: 14, color: AppColors.dark),
+              decoration: InputDecoration(
+                hintText: widget.hint,
+                hintStyle: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textLight,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                border: InputBorder.none,
+                suffixIcon: widget.isPassword
+                    ? GestureDetector(
+                        onTap: () => setState(() => _obscure = !_obscure),
+                        child: Icon(
+                          _obscure
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          size: 18,
+                          color: AppColors.textMuted,
+                        ),
+                      )
+                    : null,
+              ),
             ),
-            border: InputBorder.none,
-            suffixIcon: widget.isPassword
-                ? GestureDetector(
-                    onTap: () => setState(() => _obscure = !_obscure),
-                    child: Icon(
-                      _obscure
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      size: 16,
-                      color: AppColors.textMuted,
-                    ),
-                  )
-                : null,
           ),
-        ),
-      ),
-    ],
-  );
+        ],
+      );
 }

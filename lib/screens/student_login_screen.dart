@@ -30,7 +30,6 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
       final idToken = await StudentSessionStore.getGoogleIdToken();
       if (!mounted) return;
       if (idToken == null) {
-        // User cancelled the account picker.
         setState(() => _isLoading = false);
         return;
       }
@@ -44,9 +43,6 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     }
   }
 
-  /// Reuses the same Google idToken for both the initial attempt and the
-  /// school-ID retry, so a first-time sign-up never needs a second Google
-  /// account picker just to attach the school ID.
   Future<void> _completeWithToken(String idToken, String? schoolId) async {
     try {
       final session = await StudentSessionStore.completeGoogleAuth(
@@ -58,12 +54,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     } on SchoolIdRequiredException {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      // Plain pushNamed (no <String> type arg) — the app's `routes:` table
-      // wraps every builder in an untyped MaterialPageRoute, so requesting
-      // pushNamed<String> makes the Navigator's internal cast to
-      // Route<String?> fail at runtime. Cast the dynamic result ourselves
-      // instead.
-      final result = await Navigator.of(context).pushNamed('/student/school-id');
+      final result = await Navigator.of(
+        context,
+      ).pushNamed('/student/school-id');
       final enteredId = result as String?;
       if (enteredId == null || enteredId.trim().isEmpty) return;
       setState(() => _isLoading = true);
@@ -113,143 +106,230 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    // Increased height ratio to give more space to the top image and logo
+    final imageHeight = screenHeight * 0.44;
+
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: const QAppBar(title: 'QueuEx'),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 40),
-              Center(
-                child: Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.purple,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text(
-                    'Q',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.white,
-                    ),
+      body: Column(
+        children: [
+          // --- Top hero image with back button ---
+          SizedBox(
+            width: double.infinity,
+            height: imageHeight,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/img/NcfImg.png',
+                    fit: BoxFit.cover,
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Welcome back',
-                textAlign: TextAlign.center,
-                style: AppText.title,
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Sign in to join the queue and track your place from your phone.',
-                textAlign: TextAlign.center,
-                style: AppText.bodyMuted,
-              ),
-              const SizedBox(height: 36),
-
-              if (_isLoading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.dark,
-                    ),
-                  ),
-                )
-              else ...[
-                PrimaryButton(
-                  label: 'Log in with Face',
-                  onTap: _handleFaceLogin,
-                ),
-                const SizedBox(height: 10),
-                PrimaryButton(
-                  label: 'Sign in with Gbox',
-                  outlined: true,
-                  onTap: _handleGoogleSignIn,
-                ),
-              ],
-
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(11),
-                  decoration: BoxDecoration(
-                    color: AppColors.redLight,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Text(
-                    _errorMessage!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      height: 1.4,
-                      color: AppColors.redDark,
-                    ),
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 28),
-              const Row(
-                children: [
-                  Expanded(child: Divider(color: AppColors.borderMid)),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('NEW HERE?', style: AppText.overline),
-                  ),
-                  Expanded(child: Divider(color: AppColors.borderMid)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              PrimaryButton(
-                label: 'Create an account',
-                outlined: true,
-                borderColor: AppColors.purple,
-                fg: AppColors.purpleDark,
-                onTap: _isLoading ? null : _handleGoogleSignIn,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Registering uses your NCF Gbox account.',
-                textAlign: TextAlign.center,
-                style: AppText.caption,
-              ),
-
-              const Spacer(),
-              Center(
-                child: GestureDetector(
-                  onTap: _isLoading
-                      ? null
-                      : () => Navigator.of(
-                          context,
-                        ).pushReplacementNamed('/ticket/lookup'),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Text(
-                      'Just tracking a printed ticket?',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textLight,
-                        decoration: TextDecoration.underline,
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16, top: 10),
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).maybePop(),
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new,
+                          size: 16,
+                          color: AppColors.dark,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 4),
-            ],
+              ],
+            ),
           ),
-        ),
+
+          // --- Scrollable rounded content sheet, overlapping the image ---
+          Expanded(
+            child: Transform.translate(
+              offset: const Offset(0, -24),
+              child: Container(
+                width: double.infinity,
+                clipBehavior: Clip.antiAlias,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(32),
+                    topRight: Radius.circular(32),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Logo + title row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Welcome Back',
+                                  textAlign: TextAlign.center,
+                                  style: AppText.title.copyWith(
+                                    color: AppColors.greenDark,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Sign in to join the queue and track your place from your phone.',
+                                  textAlign: TextAlign.center,
+                                  style: AppText.bodyMuted,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      if (_isLoading)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.green,
+                            ),
+                          ),
+                        )
+                      else ...[
+                        PrimaryButton(
+                          label: 'Log in with Face',
+                          bg: AppColors.green,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          fontSize: 15,
+                          onTap: _handleFaceLogin,
+                        ),
+                        const SizedBox(height: 10),
+                        PrimaryButton(
+                          label: 'Sign in with Gbox',
+                          outlined: true,
+                          borderColor: AppColors.green,
+                          fg: AppColors.greenDark,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          fontSize: 15,
+                          onTap: _handleGoogleSignIn,
+                        ),
+                      ],
+
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.redLight,
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              height: 1.4,
+                              color: AppColors.redDark,
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 20),
+                      const Row(
+                        children: [
+                          Expanded(child: Divider(color: AppColors.borderMid)),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12),
+                            child: Text('New here?', style: AppText.bodyMuted),
+                          ),
+                          Expanded(child: Divider(color: AppColors.borderMid)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Center(
+                        child: GestureDetector(
+                          onTap: _isLoading ? null : _handleGoogleSignIn,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Text(
+                              'Create an account',
+                              style: AppText.label.copyWith(
+                                color: AppColors.green,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Registering uses your NCF Gbox account.',
+                        textAlign: TextAlign.center,
+                        style: AppText.caption,
+                      ),
+
+                      const SizedBox(height: 16),
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: _isLoading
+                            ? null
+                            : () => Navigator.of(
+                                context,
+                              ).pushReplacementNamed('/ticket/lookup'),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            border: Border.all(color: AppColors.borderMid),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(
+                                Icons.confirmation_number_outlined,
+                                size: 18,
+                                color: AppColors.textMuted,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Just tracking a printed ticket?',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.dark,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

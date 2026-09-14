@@ -100,7 +100,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xCC1A1A2E),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0x667F77DD)),
+                  border: Border.all(color: const Color(0x66047857)),
                 ),
                 child: const Text(
                   'Point the camera at the QueuEx QR code on your ticket.',
@@ -138,7 +138,7 @@ class _ScannerOverlayPainter extends CustomPainter {
     canvas.drawPath(cutout, shade);
 
     final border = Paint()
-      ..color = AppColors.purple
+      ..color = AppColors.green
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;

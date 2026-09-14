@@ -5,10 +5,18 @@ class AppColors {
   static const Color purple = Color(0xFF7F77DD);
   static const Color purpleDark = Color(0xFF534AB7);
   static const Color purpleLight = Color(0xFFEEEDFE);
-  static const Color green = Color(0xFF0F6E56);
-  static const Color greenLight = Color(0xFFE1F5EE);
-  static const Color greenBright = Color(0xFF1D9E75);
-  static const Color greenDark = Color(0xFF0B5C47);
+
+  /// Primary brand accent — Tailwind emerald-700.
+  static const Color green = Color(0xFF047857);
+
+  /// Tinted surface for badges/backgrounds — emerald-50.
+  static const Color greenLight = Color(0xFFECFDF5);
+
+  /// Hover/pressed states, brighter emphasis — emerald-600.
+  static const Color greenBright = Color(0xFF059669);
+
+  /// Text-on-light and high-contrast accents — emerald-800.
+  static const Color greenDark = Color(0xFF065F46);
   static const Color amber = Color(0xFF854F0B);
   static const Color amberLight = Color(0xFFFAEEDA);
   static const Color amberBright = Color(0xFFBA7517);
@@ -99,7 +107,7 @@ class AppText {
 class AppTheme {
   static ThemeData get theme => ThemeData(
     scaffoldBackgroundColor: AppColors.bg,
-    colorScheme: ColorScheme.fromSeed(seedColor: AppColors.purple),
+    colorScheme: ColorScheme.fromSeed(seedColor: AppColors.green),
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.dark,
       foregroundColor: AppColors.white,

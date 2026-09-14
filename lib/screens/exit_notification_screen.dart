@@ -30,30 +30,30 @@ class ExitNotificationScreen extends StatelessWidget {
       body: Stack(
         children: [
           Opacity(
-            opacity: 0.2,
+            opacity: 0.15,
             child: Padding(
-              padding: const EdgeInsets.all(11),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
                   QueueNumberCard(
                     number: queueDigits,
                     label: 'Your Number',
                     bg: AppColors.dark,
-                    numColor: const Color(0xFFA29EF0),
+                    numColor: const Color(0xFF9FE1CB),
                     badge: const QBadge(
-                      label: 'Waiting',
-                      bg: AppColors.purpleLight,
-                      fg: AppColors.purpleDark,
+                      label: 'Ended',
+                      bg: AppColors.amberLight,
+                      fg: AppColors.amberText,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Row(
                     children: const [
-                      StatTile(value: '0', label: 'Ahead'),
-                      SizedBox(width: 6),
-                      StatTile(value: '0', label: 'Est. min'),
-                      SizedBox(width: 6),
-                      StatTile(value: '2', label: 'Counters'),
+                      Expanded(child: StatTile(value: '0', label: 'Ahead')),
+                      SizedBox(width: 8),
+                      Expanded(child: StatTile(value: '0', label: 'Est. min')),
+                      SizedBox(width: 8),
+                      Expanded(child: StatTile(value: '-', label: 'Counters')),
                     ],
                   ),
                 ],
@@ -65,83 +65,110 @@ class ExitNotificationScreen extends StatelessWidget {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(15, 16, 15, 20),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
               decoration: const BoxDecoration(
                 color: AppColors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                border: Border(top: BorderSide(color: AppColors.borderMid)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x14000000),
+                    blurRadius: 20,
+                    offset: Offset(0, -6),
+                  ),
+                ],
               ),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 32,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFDDDDE8),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+                  Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.borderMid,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 20),
                   Container(
-                    width: 48,
-                    height: 48,
-                    decoration: const BoxDecoration(
-                      color: AppColors.purpleLight,
+                    width: 64,
+                    height: 64,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.amberLight,
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.amberBright.withValues(alpha: 0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: const Icon(
-                      Icons.warning_amber_rounded,
-                      color: AppColors.purpleDark,
-                      size: 26,
+                      Icons.logout_rounded,
+                      color: AppColors.amberBright,
+                      size: 28,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                   const Text(
                     'Your session has ended',
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
                       color: AppColors.dark,
                     ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Your transaction is now complete. Kindly vacate the queue area to allow the next person to be served.',
+                    'Your transaction is complete. Kindly vacate the queue area to allow the next person to be served.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 10,
-                      color: Color(0xFF666666),
-                      height: 1.5,
+                      fontSize: 13,
+                      color: AppColors.textMuted,
+                      height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.bg,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border),
                     ),
-                    child: Text(
-                      '$queueLabel is no longer active.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: AppColors.textMuted,
-                        height: 1.4,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.info_outline_rounded,
+                          size: 16,
+                          color: AppColors.textMuted,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$queueLabel is no longer active.',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.dark,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 24),
                   PrimaryButton(
                     label: "Got it, I'm leaving",
+                    bg: AppColors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    fontSize: 14,
                     onTap: () {
                       QueueSessionStore.clear();
-                      // A signed-in student goes back to their own dashboard;
-                      // only a guest (tracking a printed ticket with no
-                      // account) has nowhere to land but the lookup form.
                       Navigator.pushReplacementNamed(
                         context,
                         StudentSessionStore.isLoggedIn
@@ -150,10 +177,14 @@ class ExitNotificationScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   PrimaryButton(
                     label: 'View my summary',
                     outlined: true,
+                    borderColor: AppColors.borderMid,
+                    fg: AppColors.dark,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    fontSize: 14,
                     onTap: () => Navigator.pushReplacementNamed(
                       context,
                       '/queue/complete',

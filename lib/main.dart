@@ -38,7 +38,7 @@ class QueueFlowApp extends StatelessWidget {
       title: 'QueuEx',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      initialRoute: '/',
+      initialRoute: '/student/home',
       routes: {
         '/': (_) => const _BootstrapScreen(),
         '/student/login': (_) => const StudentLoginScreen(),
@@ -103,9 +103,7 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: AppColors.dark,
-      body: Center(
-        child: CircularProgressIndicator(color: AppColors.white),
-      ),
+      body: Center(child: CircularProgressIndicator(color: AppColors.white)),
     );
   }
 }

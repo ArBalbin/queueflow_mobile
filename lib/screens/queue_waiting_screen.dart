@@ -82,6 +82,7 @@ class _QueueWaitingScreenState extends State<QueueWaitingScreen> {
       backgroundColor: AppColors.bg,
       appBar: QAppBar(
         title: 'My Queue Status',
+        bgColor: AppColors.greenDark,
         showBack: true,
         onBack: () => goBack(context),
       ),
@@ -125,69 +126,217 @@ class _WaitingBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = snapshot.status;
 
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            QueueNumberCard(
-              number: status.queueDigits,
-              label: 'Your Number',
-              bg: AppColors.dark,
-              numColor: const Color(0xFFA29EF0),
-              badge: QBadge(
-                label: status.isMissing ? 'Missing' : 'Waiting',
-                bg: status.isMissing
-                    ? AppColors.amberLight
-                    : AppColors.purpleLight,
-                fg: status.isMissing
-                    ? AppColors.amberText
-                    : AppColors.purpleDark,
+    return Column(
+      children: [
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: onRefresh,
+            color: AppColors.green,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 46),
+                        decoration: const BoxDecoration(
+                          color: AppColors.green,
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(28),
+                            bottomRight: Radius.circular(28),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            const Text(
+                              'YOUR QUEUE NUMBER',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xB3FFFFFF),
+                                letterSpacing: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              status.queueDigits,
+                              style: const TextStyle(
+                                fontSize: 56,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.white,
+                                height: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    status.isMissing
+                                        ? Icons.warning_amber_rounded
+                                        : Icons.access_time_filled_rounded,
+                                    size: 14,
+                                    color: status.isMissing
+                                        ? AppColors.amberText
+                                        : AppColors.green,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    status.isMissing
+                                        ? 'Status: Missing'
+                                        : 'Waiting in line',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: status.isMissing
+                                          ? AppColors.amberText
+                                          : AppColors.green,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        left: 20,
+                        right: 20,
+                        bottom: -26,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x1A000000),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _StatColumn(
+                                  value: '${status.aheadCount}',
+                                  label: 'Ahead of you',
+                                ),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 28,
+                                color: AppColors.border,
+                              ),
+                              Expanded(
+                                child: _StatColumn(
+                                  value: _waitValue(
+                                    status.estimatedWaitMinutes,
+                                  ),
+                                  label: 'Est. wait (min)',
+                                ),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 28,
+                                color: AppColors.border,
+                              ),
+                              Expanded(
+                                child: _StatColumn(
+                                  value: snapshot.activeCounters > 0
+                                      ? '${snapshot.activeCounters}'
+                                      : '-',
+                                  label: 'Counters open',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 42),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (errorMessage != null) ...[
+                          AlertBanner(
+                            text: errorMessage!,
+                            bg: AppColors.redLight,
+                            borderColor: AppColors.red,
+                            dotColor: AppColors.redDark,
+                            textColor: AppColors.redDark,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        const Row(
+                          children: [
+                            Icon(
+                              Icons.groups_rounded,
+                              size: 16,
+                              color: AppColors.green,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Queue ahead of you',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.dark,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ..._queueItems(snapshot),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                StatTile(value: '${status.aheadCount}', label: 'Ahead of you'),
-                const SizedBox(width: 6),
-                StatTile(
-                  value: _waitValue(status.estimatedWaitMinutes),
-                  label: 'Est. wait (min)',
-                ),
-                const SizedBox(width: 6),
-                StatTile(
-                  value: snapshot.activeCounters > 0
-                      ? '${snapshot.activeCounters}'
-                      : '-',
-                  label: 'Counters open',
-                ),
-              ],
-            ),
-            if (errorMessage != null) ...[
-              const SizedBox(height: 8),
-              AlertBanner(
-                text: errorMessage!,
-                bg: AppColors.redLight,
-                borderColor: AppColors.red,
-                dotColor: AppColors.redDark,
-                textColor: AppColors.redDark,
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x14000000),
+                blurRadius: 16,
+                offset: Offset(0, -4),
               ),
             ],
-            const SizedBox(height: 8),
-            const SectionLabel('Queue ahead of you'),
-            const SizedBox(height: 6),
-            ..._queueItems(snapshot),
-            const SizedBox(height: 14),
-            PrimaryButton(
-              label: isRefreshing ? 'Refreshing...' : 'Refresh Status',
-              onTap: isRefreshing ? null : () => onRefresh(),
-            ),
-          ],
+          ),
+          child: PrimaryButton(
+            label: isRefreshing ? 'Refreshing Status...' : 'Refresh Status',
+            bg: AppColors.green,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            fontSize: 14,
+            onTap: isRefreshing ? null : () => onRefresh(),
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -204,7 +353,7 @@ class _WaitingBody extends StatelessWidget {
       final isNowServing = person.position <= 1 && !isCurrentUser;
 
       return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.only(bottom: 10),
         child: QueueListItem(
           number: person.queueDigits,
           title: isCurrentUser
@@ -218,21 +367,21 @@ class _WaitingBody extends StatelessWidget {
           circBg: isCurrentUser
               ? AppColors.dark
               : isNowServing
-              ? AppColors.purpleLight
-              : const Color(0xFFF1EFE8),
+              ? AppColors.amberLight
+              : AppColors.border,
           circFg: isCurrentUser
               ? AppColors.white
               : isNowServing
-              ? AppColors.purpleDark
-              : const Color(0xFF444444),
-          titleColor: isCurrentUser ? AppColors.purpleDark : null,
+              ? AppColors.amberText
+              : AppColors.textMuted,
+          titleColor: isCurrentUser ? AppColors.greenDark : null,
           highlighted: isCurrentUser,
-          highlightColor: AppColors.purple,
+          highlightColor: AppColors.green,
           badge: isCurrentUser
               ? const QBadge(
                   label: 'You',
-                  bg: AppColors.purpleLight,
-                  fg: AppColors.purpleDark,
+                  bg: AppColors.greenLight,
+                  fg: AppColors.greenDark,
                 )
               : isNowServing
               ? const QBadge(
@@ -252,6 +401,35 @@ class _WaitingBody extends StatelessWidget {
   }
 }
 
+class _StatColumn extends StatelessWidget {
+  final String value;
+  final String label;
+  const _StatColumn({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.dark,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+        ),
+      ],
+    );
+  }
+}
+
 class _EmptyQueueState extends StatelessWidget {
   final bool isLoading;
   final String? errorMessage;
@@ -261,28 +439,54 @@ class _EmptyQueueState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (isLoading)
-            const CircularProgressIndicator(color: AppColors.dark)
-          else
-            const Icon(
-              Icons.confirmation_number_outlined,
-              size: 42,
-              color: AppColors.textMuted,
+          Container(
+            width: 84,
+            height: 84,
+            decoration: const BoxDecoration(
+              color: AppColors.greenLight,
+              shape: BoxShape.circle,
             ),
-          const SizedBox(height: 12),
-          Text(
-            errorMessage ?? 'No active ticket loaded.',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+            alignment: Alignment.center,
+            child: isLoading
+                ? const CircularProgressIndicator(color: AppColors.green)
+                : const Icon(
+                    Icons.confirmation_number_outlined,
+                    size: 36,
+                    color: AppColors.green,
+                  ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 18),
+          Text(
+            errorMessage ?? 'No active ticket loaded',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.dark,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Enter your queue number and access token to check your live status.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textMuted,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
           PrimaryButton(
             label: 'Enter Ticket Details',
-            onTap: () => Navigator.pushReplacementNamed(context, '/ticket/lookup'),
+            bg: AppColors.green,
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            fontSize: 14,
+            onTap: () =>
+                Navigator.pushReplacementNamed(context, '/ticket/lookup'),
           ),
         ],
       ),
@@ -297,15 +501,15 @@ class _EmptyLineCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(11),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.white,
         border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: const Text(
         'Queue line data is not available yet.',
-        style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+        style: AppText.bodyMuted,
       ),
     );
   }

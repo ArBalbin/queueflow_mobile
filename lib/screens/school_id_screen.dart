@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
 
-/// Shown once, right after a student's first-ever Google sign-in, to link
-/// their Gbox account to their school ID number. Pops back to
-/// StudentLoginScreen with the entered ID (or null if cancelled).
 class SchoolIdScreen extends StatefulWidget {
   const SchoolIdScreen({super.key});
 
@@ -39,72 +36,101 @@ class _SchoolIdScreenState extends State<SchoolIdScreen> {
       appBar: QAppBar(
         title: 'One more step',
         showBack: true,
-        // Popping with no value cancels the in-progress sign-up and returns
-        // the caller (StudentLoginScreen) to the login screen.
         onBack: () => Navigator.of(context).pop(),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Welcome! This is your first time signing in.',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: AppColors.dark,
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Enter your student ID number to link it to this Google account. '
-              "You'll only need to do this once.",
-              style: TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.4),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'STUDENT ID',
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textMuted,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                border: Border.all(color: AppColors.borderMid),
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: TextField(
-                controller: _controller,
-                autofocus: true,
-                style: const TextStyle(fontSize: 13, color: AppColors.dark),
-                decoration: const InputDecoration(
-                  hintText: 'e.g. 21-1234',
-                  hintStyle: TextStyle(fontSize: 13, color: AppColors.textLight),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 11,
-                    vertical: 10,
-                  ),
-                  border: InputBorder.none,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const verticalPadding = 40.0;
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - verticalPadding,
                 ),
-                onSubmitted: (_) => _submit(),
+                child: IntrinsicHeight(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text.rich(
+                        TextSpan(
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.dark,
+                          ),
+                          children: [
+                            const TextSpan(
+                              text: 'Welcome,',
+                              style: TextStyle(
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.green,
+                              ),
+                            ),
+                            const TextSpan(
+                              text: ' This is your first time signing in.',
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Enter your student ID number to link it to this Google account. You'll only need to do this once.",
+                        style: AppText.bodyMuted,
+                      ),
+                      const SizedBox(height: 32),
+                      const Text('STUDENT ID', style: AppText.overline),
+                      const SizedBox(height: 6),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          border: Border.all(color: AppColors.borderMid),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: TextField(
+                          controller: _controller,
+                          autofocus: true,
+                          style: const TextStyle(fontSize: 14, color: AppColors.dark),
+                          decoration: const InputDecoration(
+                            hintText: 'ex. 21-1234',
+                            hintStyle: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textLight,
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                            border: InputBorder.none,
+                          ),
+                          onSubmitted: (_) => _submit(),
+                        ),
+                      ),
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.red,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      PrimaryButton(
+                        label: 'Continue',
+                        bg: AppColors.green,
+                        onTap: _submit,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                _errorMessage!,
-                style: const TextStyle(fontSize: 10, color: AppColors.red),
-              ),
-            ],
-            const SizedBox(height: 18),
-            PrimaryButton(label: 'Continue', onTap: _submit),
-          ],
+            );
+          },
         ),
       ),
     );
