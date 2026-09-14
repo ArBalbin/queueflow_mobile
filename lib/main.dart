@@ -83,8 +83,12 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
 
     if (restored) {
       final hasFace = StudentSessionStore.profile?.hasFaceEmbedding ?? false;
+      // A restored session with no face is a sign-up the student abandoned
+      // before capturing their face (app closed mid-registration). Resume it
+      // as sign-up, so it too finishes at the login screen.
       Navigator.of(context).pushReplacementNamed(
         hasFace ? '/student/home' : '/student/face-capture',
+        arguments: hasFace ? null : faceCaptureSignupArgument,
       );
       return;
     }

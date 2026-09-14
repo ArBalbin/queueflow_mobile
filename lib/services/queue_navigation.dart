@@ -4,6 +4,18 @@ import '../models/queue_models.dart';
 import 'queue_session_store.dart';
 import 'student_session_store.dart';
 
+/// Route argument marking face capture as the final step of sign-up, as
+/// opposed to a signed-in student setting up or replacing their face from the
+/// dashboard. The two must end differently: sign-up ends at the login screen,
+/// a dashboard update ends back on the dashboard. Without the marker the
+/// capture screen cannot tell them apart, and logging out at the end of every
+/// capture would sign out a student who only wanted to update their photo.
+const String faceCaptureSignupArgument = 'signup';
+
+/// Route argument telling the login screen that a registration has just
+/// finished, so it can say so rather than reappearing with no explanation.
+const String loginRegisteredArgument = 'registered';
+
 String routeForQueueSnapshot(QueueSnapshot snapshot) {
   final status = snapshot.status;
   if (status.isDone) return '/queue/exit';

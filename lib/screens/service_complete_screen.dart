@@ -7,6 +7,20 @@ import '../widgets/shared_widgets.dart';
 class ServiceCompleteScreen extends StatelessWidget {
   const ServiceCompleteScreen({super.key});
 
+  /// Every way off this screen ends the finished session first.
+  ///
+  /// The ticket shown here has already been served, and its snapshot is still
+  /// in QueueSessionStore — this screen reads it to display the queue number.
+  /// routeForCurrentQueue() sends any done snapshot to '/queue/exit', so
+  /// "Back to Home" (which asked routeForCurrentQueue) landed the student on
+  /// the "Got it, I'm leaving" screen instead of home, every time. The exit
+  /// screen already clears before navigating; this matches it. [destination]
+  /// is a function so the route is computed only after the clear.
+  void _leave(BuildContext context, String Function() destination) {
+    QueueSessionStore.clear();
+    Navigator.of(context).pushReplacementNamed(destination());
+  }
+
   @override
   Widget build(BuildContext context) {
     final snapshot = QueueSessionStore.latestSnapshot;
@@ -22,7 +36,7 @@ class ServiceCompleteScreen extends StatelessWidget {
       appBar: QAppBar(
         title: 'QueuEx',
         showBack: true,
-        onBack: () => goBack(context),
+        onBack: () => _leave(context, backDestination),
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -118,10 +132,7 @@ class ServiceCompleteScreen extends StatelessWidget {
                 bg: AppColors.green,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 fontSize: 14,
-                onTap: () => Navigator.pushReplacementNamed(
-                  context,
-                  routeForCurrentQueue(),
-                ),
+                onTap: () => _leave(context, backDestination),
               ),
             ],
           ),
@@ -131,7 +142,7 @@ class ServiceCompleteScreen extends StatelessWidget {
         currentIndex: 1,
         onTap: (i) {
           if (i != 1) {
-            Navigator.pushReplacementNamed(context, routeForBottomNavIndex(i));
+            _leave(context, () => routeForBottomNavIndex(i));
           }
         },
       ),

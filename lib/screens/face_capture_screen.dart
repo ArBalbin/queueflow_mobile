@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../services/camera_ml_kit.dart';
 import '../services/queue_api.dart';
+import '../services/queue_navigation.dart';
 import '../services/student_session_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
@@ -247,7 +248,31 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
     });
   }
 
+  /// True when this capture is the last step of sign-up rather than a
+  /// signed-in student updating their face from the dashboard.
+  bool get _isSignup =>
+      ModalRoute.of(context)?.settings.arguments == faceCaptureSignupArgument;
+
+  /// Leaves the screen without saving a face.
+  ///
+  /// During sign-up this signs the student out and returns to login: backing
+  /// out must not leave a half-registered account sitting on the dashboard,
+  /// which is the outcome sign-up is meant to avoid. Their account keeps its
+  /// school ID, so signing in again resumes straight at this screen.
+  Future<void> _leave() async {
+    if (_isSignup) {
+      await StudentSessionStore.logout();
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil('/student/login', (_) => false);
+      return;
+    }
+    Navigator.of(context).pushReplacementNamed('/student/home');
+  }
+
   Future<void> _submit() async {
+    // Read before any await: the route arguments are what tell sign-up apart
+    // from a dashboard update, and context must not be used across the gaps.
+    final isSignup = _isSignup;
     setState(() {
       _isSubmitting = true;
       _status = 'Saving your face registration…';
@@ -259,6 +284,20 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
     try {
       await StudentSessionStore.registerFace(_photos);
       if (!mounted) return;
+      if (isSignup) {
+        // Registration ends at the login screen, signed out, so the student
+        // logs in for real — and a face login immediately afterwards confirms
+        // the capture they just saved actually recognises them. The route
+        // stack is cleared so back cannot return here or to the dashboard.
+        await StudentSessionStore.logout();
+        if (!mounted) return;
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/student/login',
+          (_) => false,
+          arguments: loginRegisteredArgument,
+        );
+        return;
+      }
       Navigator.of(context).pushReplacementNamed('/student/home');
     } on QueueApiException catch (error) {
       if (!mounted) return;
@@ -309,8 +348,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
       appBar: QAppBar(
         title: 'Register Your Face',
         showBack: true,
-        onBack: () =>
-            Navigator.of(context).pushReplacementNamed('/student/home'),
+        onBack: _leave,
       ),
       body: SafeArea(
         child: Column(

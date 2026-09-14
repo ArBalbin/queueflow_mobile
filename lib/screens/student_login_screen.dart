@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../services/queue_api.dart';
+import '../services/queue_navigation.dart';
 import '../services/student_api.dart';
 import '../services/student_session_store.dart';
 import '../theme/app_theme.dart';
@@ -91,8 +92,16 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   }
 
   void _goToNextScreen(bool hasFaceEmbedding) {
+    if (hasFaceEmbedding) {
+      Navigator.of(context).pushReplacementNamed('/student/home');
+      return;
+    }
+    // An account with no face yet has not finished signing up. Mark the
+    // capture screen as the sign-up flow so it ends at the login screen
+    // instead of dropping a half-registered student onto the dashboard.
     Navigator.of(context).pushReplacementNamed(
-      hasFaceEmbedding ? '/student/home' : '/student/face-capture',
+      '/student/face-capture',
+      arguments: faceCaptureSignupArgument,
     );
   }
 
@@ -107,6 +116,8 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final justRegistered =
+        ModalRoute.of(context)?.settings.arguments == loginRegisteredArgument;
     // Increased height ratio to give more space to the top image and logo
     final imageHeight = screenHeight * 0.44;
 
@@ -227,6 +238,29 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           fontSize: 15,
                           onTap: _handleGoogleSignIn,
+                        ),
+                      ],
+
+                      // Shown after sign-up returns here. Hidden as soon as an
+                      // error appears, so the two never stack.
+                      if (justRegistered && _errorMessage == null) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.greenLight,
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: const Text(
+                            'Registration complete. Log in with your face to '
+                            'confirm it recognises you, or sign in with Gbox.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              height: 1.4,
+                              color: AppColors.greenDark,
+                            ),
+                          ),
                         ),
                       ],
 
