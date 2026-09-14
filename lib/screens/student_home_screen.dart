@@ -362,12 +362,28 @@ class _StatColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.dark)),
-        const SizedBox(height: 4),
-        Text(label, textAlign: TextAlign.center, style: AppText.caption),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Column(
+        children: [
+          // The three values differ wildly in length: "0" and "3" are a
+          // character or two, but the wait label can read "less than 1 min".
+          // At a fixed 20pt that label is wider than a third of the card, so
+          // it wrapped onto two lines, lost its centring, and towered over its
+          // neighbours. scaleDown shrinks only a value that does not fit on
+          // one line, so short numbers keep their full size.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.dark),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(label, textAlign: TextAlign.center, style: AppText.caption),
+        ],
+      ),
     );
   }
 }
