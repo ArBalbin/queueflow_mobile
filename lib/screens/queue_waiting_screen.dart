@@ -137,19 +137,33 @@ class _WaitingBody extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Same fix as youre_next_screen: the stat card is laid out in
+                  // the same Column as the status pill instead of hanging off
+                  // the header with Positioned(bottom: -26), so the gap between
+                  // them is a real SizedBox rather than a match between the
+                  // header's bottom padding and the card's height. Only 6dp
+                  // separated them before, which a larger system font erases.
                   Stack(
                     clipBehavior: Clip.none,
+                    fit: StackFit.passthrough,
                     children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 46),
-                        decoration: const BoxDecoration(
-                          color: AppColors.green,
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(28),
-                            bottomRight: Radius.circular(28),
+                      const Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 26,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: AppColors.green,
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(28),
+                              bottomRight: Radius.circular(28),
+                            ),
                           ),
                         ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                         child: Column(
                           children: [
                             const Text(
@@ -209,14 +223,8 @@ class _WaitingBody extends StatelessWidget {
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      Positioned(
-                        left: 20,
-                        right: 20,
-                        bottom: -26,
-                        child: Container(
+                            const SizedBox(height: 20),
+                            Container(
                           padding: const EdgeInsets.symmetric(
                             vertical: 14,
                             horizontal: 12,
@@ -269,10 +277,12 @@ class _WaitingBody extends StatelessWidget {
                             ],
                           ),
                         ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 42),
+                  const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                     child: Column(

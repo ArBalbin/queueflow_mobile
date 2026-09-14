@@ -177,19 +177,39 @@ class _NextBody extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // The stat chips straddle the bottom edge of the green header.
+                  // They used to hang off it via Positioned(bottom: -28), outside
+                  // the layout, so the space between the status pill and the
+                  // chips depended on two hand-matched numbers: the header's
+                  // bottom padding (44) versus how far the chips reach up into
+                  // it (chip height minus the overhang, ~49). The chips won, and
+                  // covered the pill; a larger system font made it worse.
+                  //
+                  // Now the chips sit in the same Column as the pill, so the gap
+                  // between them is a real SizedBox that cannot collapse, and the
+                  // green is a background layer that simply stops 28dp above the
+                  // chips' bottom edge.
                   Stack(
                     clipBehavior: Clip.none,
+                    fit: StackFit.passthrough,
                     children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(24, 22, 24, 44),
-                        decoration: const BoxDecoration(
-                          color: AppColors.green,
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(28),
-                            bottomRight: Radius.circular(28),
+                      const Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 28,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: AppColors.green,
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(28),
+                              bottomRight: Radius.circular(28),
+                            ),
                           ),
                         ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
                         child: Column(
                           children: [
                             const Text(
@@ -243,14 +263,8 @@ class _NextBody extends StatelessWidget {
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      Positioned(
-                        left: 20,
-                        right: 20,
-                        bottom: -28,
-                        child: Row(
+                            const SizedBox(height: 20),
+                            Row(
                           children: [
                             Expanded(
                               child: _StatChip(
@@ -279,10 +293,12 @@ class _NextBody extends StatelessWidget {
                             ),
                           ],
                         ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 46),
+                  const SizedBox(height: 18),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                     child: Column(
