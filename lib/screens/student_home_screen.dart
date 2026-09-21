@@ -50,19 +50,32 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
       if (entry.hasActiveEntry && entry.queueNumber != null && entry.accessToken != null) {
         _isNavigating = true;
-        final snapshot = await QueueSessionStore.startSessionWithCredentials(
-          QueueCredentials(queueNumber: entry.queueNumber!, accessToken: entry.accessToken!),
-        );
-        if (!mounted) return;
+        try {
+          final snapshot = await QueueSessionStore.startSessionWithCredentials(
+            QueueCredentials(queueNumber: entry.queueNumber!, accessToken: entry.accessToken!),
+          );
+          if (!mounted) return;
 
-        if (snapshot.status.isDone) {
-          QueueSessionStore.clear();
+          if (snapshot.status.isDone) {
+            QueueSessionStore.clear();
+            _isNavigating = false;
+            return;
+          }
+
+          _pollTimer?.cancel();
+          Navigator.of(context).pushReplacementNamed(routeForQueueSnapshot(snapshot));
+        } catch (e) {
+          // The entry is real and still waiting — only fetching its detail
+          // failed, which the deployed backend makes likely: measured 559ms
+          // typical and 7.6s at worst, against this call's own timeout.
+          //
+          // The guard has to come back off. Left set, it made line 46 return
+          // immediately on every later poll, so one slow request stranded
+          // this screen on "You're in the queue" for the life of the app
+          // while the backend was answering with the queue number all along.
+          debugPrint('[QueuEx] queue entry found but could not be opened: $e');
           _isNavigating = false;
-          return;
         }
-
-        _pollTimer?.cancel();
-        Navigator.of(context).pushReplacementNamed(routeForQueueSnapshot(snapshot));
         return;
       }
 
@@ -72,7 +85,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           if (!_joinBusy) _joined = entry.joined;
         });
       }
-    } catch (_) {}
+    } catch (e) {
+      // Not worth interrupting the screen for — the next tick is five seconds
+      // away. Worth printing: a poll going quietly wrong is invisible from the
+      // UI, which is how the navigation guard above stayed stuck without a clue.
+      debugPrint('[QueuEx] queue poll failed: $e');
+    }
   }
 
   Future<void> _setJoined(bool value) async {
