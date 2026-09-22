@@ -32,12 +32,23 @@ class MyQueueEntry {
   final int? queueNumber;
   final String? accessToken;
 
+  /// Where the student actually is in the flow, as named by the backend.
+  ///
+  /// The booleans above cannot tell "the camera has not seen you" apart from
+  /// "the camera saw you and wrote you off because you had not joined yet" —
+  /// both arrive as all-false, which left this screen with nothing to show
+  /// and made a working system look stuck. Known values: `not_joined`,
+  /// `waiting_for_camera`, `identifying`, `recognized_not_joined`,
+  /// `recently_served`, `active`. Unknown values fall back to the booleans.
+  final String state;
+
   const MyQueueEntry({
     required this.hasActiveEntry,
     required this.pendingLink,
     this.joined = false,
     this.queueNumber,
     this.accessToken,
+    this.state = '',
   });
 
   factory MyQueueEntry.fromJson(Map<String, dynamic> json) {
@@ -47,6 +58,7 @@ class MyQueueEntry {
       joined: json['joined'] == true,
       queueNumber: (json['queue_number'] as num?)?.toInt(),
       accessToken: json['access_token'] as String?,
+      state: (json['state'] as String?) ?? '',
     );
   }
 }

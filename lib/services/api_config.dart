@@ -1,13 +1,21 @@
-import 'package:flutter/foundation.dart';
-
 class ApiConfig {
-  // Always override this per network with:
-  //   flutter run --dart-define=QUEUEFLOW_API_BASE_URL=http://<your-pc-lan-ip>:5000
-  // The Android fallback below is a specific developer machine's current
-  // Wi-Fi LAN IP (check with `ipconfig` / `Get-NetIPAddress` on that PC) —
-  // it WILL go stale the moment that machine reconnects to a different
-  // network or gets reassigned a new DHCP address. Don't rely on it silently
-  // matching; always pass the override for anyone else's setup.
+  /// The deployed backend. This is the default for every platform, because it
+  /// is where the app is actually expected to talk in normal use: the backend
+  /// runs in the cloud so phones can reach it from any network, and only the
+  /// detector stays on a local machine with the camera.
+  ///
+  /// The previous default was a developer laptop's Wi-Fi LAN address. That
+  /// address goes stale the moment the machine joins a different network or
+  /// is reassigned by DHCP, and a release build carrying it cannot reach
+  /// anything at all — which is exactly what happened: installed APKs were
+  /// pointing at a LAN IP that no longer existed while the real backend was
+  /// live and healthy.
+  static const String cloudBaseUrl =
+      'https://cv-auto-ticket-generation.onrender.com';
+
+  /// Point the app somewhere else for local development, passing the LAN
+  /// address of the machine running the backend:
+  ///   `flutter run --dart-define=QUEUEFLOW_API_BASE_URL=http://192.168.1.5:5000`
   static const String _overrideBaseUrl = String.fromEnvironment(
     'QUEUEFLOW_API_BASE_URL',
   );
@@ -15,21 +23,7 @@ class ApiConfig {
   static String get baseUrl {
     final override = _overrideBaseUrl.trim();
     if (override.isNotEmpty) return _stripTrailingSlash(override);
-
-    if (kIsWeb) return 'http://localhost:5000';
-
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return 'http://10.53.16.12:5000';
-        // return 'https://cv-auto-ticket-generation.onrender.com';
-      case TargetPlatform.iOS:
-        return 'http://127.0.0.1:5000';
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-      case TargetPlatform.fuchsia:
-        return 'http://localhost:5000';
-    }
+    return cloudBaseUrl;
   }
 
   static String _stripTrailingSlash(String value) {

@@ -137,27 +137,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     fit: BoxFit.cover,
                   ),
                 ),
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 16, top: 10),
-                    child: GestureDetector(
-                      onTap: () => Navigator.of(context).maybePop(),
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back_ios_new,
-                          size: 16,
-                          color: AppColors.dark,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                // No back control here on purpose. This screen is the app's
+                // entry point, so there is nothing behind it to return to and
+                // maybePop() simply did nothing when tapped.
               ],
             ),
           ),

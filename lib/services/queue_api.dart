@@ -7,6 +7,22 @@ import 'package:http/http.dart' as http;
 import '../models/queue_models.dart';
 import 'api_config.dart';
 
+/// How long to wait on a backend request.
+///
+/// The backend runs on Render's free tier, which stops the container after
+/// about 15 minutes without traffic and needs time to start it again. Measured
+/// cold starts: 21.5s, 24.2s and 34.3s. The previous 15s limit expired before
+/// the server had finished waking, so the first request after any idle period
+/// failed with "Cannot reach QueuEx API" while nothing was actually wrong.
+///
+/// This long wait is only ever paid on a cold start: once the detector is
+/// running it pushes continuously and the service never sleeps.
+const Duration kApiTimeout = Duration(seconds: 60);
+
+/// Uploads carry photo data and take longer than a plain request — on top of
+/// any cold start.
+const Duration kUploadTimeout = Duration(seconds: 90);
+
 class QueueApiException implements Exception {
   final String message;
   final int? statusCode;
@@ -161,7 +177,7 @@ class QueueApiClient {
     try {
       final response = await _client
           .get(uri)
-          .timeout(const Duration(seconds: 15));
+          .timeout(kApiTimeout);
       return _decodeResponse(response);
     } on QueueApiException {
       rethrow;
@@ -194,7 +210,7 @@ class QueueApiClient {
             headers: const {'Content-Type': 'application/json'},
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(kApiTimeout);
       return _decodeResponse(response);
     } on QueueApiException {
       rethrow;

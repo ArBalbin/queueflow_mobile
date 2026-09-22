@@ -93,7 +93,7 @@ class StudentApiClient {
     try {
       final response = await _client
           .get(uri, headers: _headers(sessionToken))
-          .timeout(const Duration(seconds: 15));
+          .timeout(kApiTimeout);
       return _decode(response);
     } on QueueApiException {
       rethrow;
@@ -122,7 +122,7 @@ class StudentApiClient {
             },
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 20));
+          .timeout(kApiTimeout);
       return _decode(response);
     } on QueueApiException {
       rethrow;
@@ -143,7 +143,7 @@ class StudentApiClient {
     try {
       final response = await _client
           .delete(uri, headers: _headers(sessionToken))
-          .timeout(const Duration(seconds: 15));
+          .timeout(kApiTimeout);
       return _decode(response);
     } on QueueApiException {
       rethrow;
@@ -171,7 +171,7 @@ class StudentApiClient {
           await http.MultipartFile.fromPath(fileField, file.path),
         );
       }
-      final streamed = await request.send().timeout(const Duration(seconds: 30));
+      final streamed = await request.send().timeout(kUploadTimeout);
       final response = await http.Response.fromStream(streamed);
       return _decode(response);
     } on QueueApiException {

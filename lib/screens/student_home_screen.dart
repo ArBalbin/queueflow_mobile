@@ -20,6 +20,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   bool _pendingLink = false;
   bool _joined = false;
   bool _joinBusy = false;
+  String _queueState = '';
   QueuePrediction? _prediction;
   bool _isNavigating = false;
   Timer? _pollTimer;
@@ -82,6 +83,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       if (mounted) {
         setState(() {
           _pendingLink = entry.pendingLink;
+          _queueState = entry.state;
           if (!_joinBusy) _joined = entry.joined;
         });
       }
@@ -196,13 +198,48 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     onTap: () => Navigator.of(context).pushNamed('/student/face-capture'),
                   ),
                 )
-              else if (_pendingLink)
+              else if (_queueState == 'recognized_not_joined')
+                _StatusCard(
+                  icon: Icons.person_search_rounded,
+                  iconBg: AppColors.greenLight,
+                  iconColor: AppColors.green,
+                  title: 'The camera recognized you',
+                  message:
+                      'You had not joined the queue yet when the camera saw you, so no '
+                      'number was issued. Tap below to join, then stay in view for a '
+                      'few seconds.',
+                  action: PrimaryButton(
+                    label: _joinBusy ? 'Joining…' : 'Join the Queue',
+                    bg: AppColors.green,
+                    onTap: _joinBusy ? null : () => _setJoined(true),
+                  ),
+                )
+              else if (_queueState == 'recently_served')
+                _StatusCard(
+                  icon: Icons.task_alt_rounded,
+                  iconBg: AppColors.greenLight,
+                  iconColor: AppColors.green,
+                  title: 'You were just served',
+                  message:
+                      'Step away from the camera for a few seconds before joining again. '
+                      'Your previous entry is still clearing.',
+                  action: PrimaryButton(
+                    label: _joinBusy ? 'Joining…' : 'Join again',
+                    outlined: true,
+                    borderColor: AppColors.borderMid,
+                    fg: AppColors.dark,
+                    onTap: _joinBusy ? null : () => _setJoined(true),
+                  ),
+                )
+              else if (_pendingLink || _queueState == 'identifying')
                 _StatusCard(
                   icon: Icons.sync_rounded,
                   iconBg: AppColors.greenLight,
                   iconColor: AppColors.green,
                   title: 'Confirming your identity',
-                  message: 'The camera sees you in the queue area — confirming your identity now.',
+                  message:
+                      'The camera can see someone in the queue area and is working out '
+                      'who it is. Face the camera straight on and stay still.',
                   action: Row(
                     children: [
                       const SizedBox(
