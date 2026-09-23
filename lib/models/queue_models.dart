@@ -101,8 +101,6 @@ class QueueStatus {
   final int waitTimeSeconds;
   final String joinedAt;
   final String joinedAtFull;
-  final bool noshowWarning;
-  final int? noshowCountdown;
   final QueueEstimate? prediction;
   final bool onTheWay;
   final String? onTheWayAt;
@@ -116,8 +114,6 @@ class QueueStatus {
     required this.waitTimeSeconds,
     required this.joinedAt,
     required this.joinedAtFull,
-    required this.noshowWarning,
-    required this.noshowCountdown,
     required this.prediction,
     required this.onTheWay,
     required this.onTheWayAt,
@@ -142,10 +138,6 @@ class QueueStatus {
       waitTimeSeconds: _readInt(json['wait_time_seconds']),
       joinedAt: _readString(json['joined_at']),
       joinedAtFull: _readString(json['joined_at_full']),
-      noshowWarning: _readBool(json['noshow_warning']),
-      noshowCountdown: json.containsKey('noshow_countdown')
-          ? _readInt(json['noshow_countdown'])
-          : null,
       prediction: predictionJson.isEmpty
           ? null
           : QueueEstimate.fromJson(predictionJson),
@@ -158,7 +150,7 @@ class QueueStatus {
   int get aheadCount => positionInLine > 0 ? positionInLine - 1 : 0;
   bool get isDone => status == 'done_pending' || status == 'served';
   bool get isNoShow => status == 'no_show';
-  bool get isMissing => status == 'missing' || noshowWarning;
+  bool get isMissing => status == 'missing';
   bool get isNext =>
       !isDone && !isNoShow && positionInLine > 0 && positionInLine <= 1;
 
@@ -177,8 +169,6 @@ class QueueStatus {
       waitTimeSeconds: waitTimeSeconds,
       joinedAt: joinedAt,
       joinedAtFull: joinedAtFull,
-      noshowWarning: noshowWarning,
-      noshowCountdown: noshowCountdown,
       prediction: prediction,
       onTheWay: onTheWay ?? this.onTheWay,
       onTheWayAt: onTheWayAt ?? this.onTheWayAt,

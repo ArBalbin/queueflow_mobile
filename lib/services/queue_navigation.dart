@@ -19,7 +19,6 @@ const String loginRegisteredArgument = 'registered';
 String routeForQueueSnapshot(QueueSnapshot snapshot) {
   final status = snapshot.status;
   if (status.isDone) return '/queue/exit';
-  if (status.noshowWarning) return '/queue/noshow';
   if (status.isNext) return '/queue/next';
   return '/queue/waiting';
 }
