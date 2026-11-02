@@ -87,10 +87,35 @@ class StudentSessionStore {
   static Future<StudentSession> completeGoogleAuth(
     String idToken, {
     String? schoolId,
+    String? consentVersion,
   }) async {
-    final session = await api.googleAuth(idToken: idToken, schoolId: schoolId);
+    final session = await api.googleAuth(
+      idToken: idToken,
+      schoolId: schoolId,
+      consentVersion: consentVersion,
+    );
     await _persist(session);
     return session;
+  }
+
+  /// Records agreement to the data-privacy notice for the signed-in student.
+  static Future<void> giveConsent(String consentVersion) async {
+    final token = _sessionToken;
+    if (token == null) {
+      throw const QueueApiException('Not logged in.');
+    }
+    profile = await api.giveConsent(token, consentVersion);
+  }
+
+  /// Deletes the student's account and face data, then signs out locally.
+  static Future<void> deleteAccount() async {
+    final token = _sessionToken;
+    if (token == null) {
+      throw const QueueApiException('Not logged in.');
+    }
+    await api.deleteAccount(token);
+    _sessionToken = null; // the server session is already gone
+    await logout();
   }
 
   static Future<StudentSession> signInWithFace(File photo) async {

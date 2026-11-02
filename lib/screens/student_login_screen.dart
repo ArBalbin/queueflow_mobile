@@ -2,12 +2,15 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../services/consent_flow.dart';
+import '../services/privacy_notice.dart';
 import '../services/queue_api.dart';
 import '../services/queue_navigation.dart';
 import '../services/student_api.dart';
 import '../services/student_session_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared_widgets.dart';
+import 'consent_screen.dart';
 import 'face_scan_screen.dart';
 
 class StudentLoginScreen extends StatefulWidget {
@@ -44,24 +47,39 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     }
   }
 
-  Future<void> _completeWithToken(String idToken, String? schoolId) async {
+  Future<void> _completeWithToken(
+    String idToken,
+    String? schoolId, {
+    bool consented = false,
+  }) async {
     try {
       final session = await StudentSessionStore.completeGoogleAuth(
         idToken,
         schoolId: schoolId,
+        consentVersion: consented ? kConsentVersion : null,
       );
       if (!mounted) return;
-      _goToNextScreen(session.profile.hasFaceEmbedding);
+      await _goToNextScreen(session.profile.hasFaceEmbedding);
     } on SchoolIdRequiredException {
+      // First sign-in with this Google account: this is a registration. The
+      // privacy notice comes first; no account is created without consent.
       if (!mounted) return;
       setState(() => _isLoading = false);
+      final agreed = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => const ConsentScreen()),
+      );
+      if (agreed != true) {
+        _showError(kConsentDeclinedMessage);
+        return;
+      }
+      if (!mounted) return;
       final result = await Navigator.of(
         context,
       ).pushNamed('/student/school-id');
       final enteredId = result as String?;
       if (enteredId == null || enteredId.trim().isEmpty) return;
       setState(() => _isLoading = true);
-      await _completeWithToken(idToken, enteredId.trim());
+      await _completeWithToken(idToken, enteredId.trim(), consented: true);
     } on QueueApiException catch (error) {
       _showError(error.message);
     } catch (_) {
@@ -83,7 +101,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     try {
       final session = await StudentSessionStore.signInWithFace(photo);
       if (!mounted) return;
-      _goToNextScreen(session.profile.hasFaceEmbedding);
+      await _goToNextScreen(session.profile.hasFaceEmbedding);
     } on QueueApiException catch (error) {
       _showError(error.message);
     } catch (_) {
@@ -91,7 +109,14 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     }
   }
 
-  void _goToNextScreen(bool hasFaceEmbedding) {
+  Future<void> _goToNextScreen(bool hasFaceEmbedding) async {
+    // Accounts created before the privacy notice existed agree to it here,
+    // at their next sign-in, before they can queue or enrol a face.
+    if (!await ensureStudentConsent(context)) {
+      _showError(kConsentDeclinedMessage);
+      return;
+    }
+    if (!mounted) return;
     if (hasFaceEmbedding) {
       Navigator.of(context).pushReplacementNamed('/student/home');
       return;

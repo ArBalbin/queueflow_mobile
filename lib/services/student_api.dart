@@ -14,6 +14,12 @@ class SchoolIdRequiredException implements Exception {
   const SchoolIdRequiredException();
 }
 
+/// Thrown when the backend refuses a request because the student has not
+/// agreed to the current data-privacy notice.
+class ConsentRequiredException implements Exception {
+  const ConsentRequiredException();
+}
+
 class StudentApiClient {
   final http.Client _client;
   final String baseUrl;
@@ -25,13 +31,30 @@ class StudentApiClient {
   Future<StudentSession> googleAuth({
     required String idToken,
     String? schoolId,
+    String? consentVersion,
   }) async {
     final response = await _postJson('/api/students/auth/google', {
       'id_token': idToken,
       if (schoolId != null && schoolId.trim().isNotEmpty)
         'school_id': schoolId.trim(),
+      'consent_version': ?consentVersion,
     });
     return StudentSession.fromJson(response);
+  }
+
+  /// Records that the signed-in student agreed to the data-privacy notice.
+  Future<StudentProfile> giveConsent(String sessionToken, String consentVersion) async {
+    final response = await _postJson(
+      '/api/students/me/consent',
+      {'consent_version': consentVersion},
+      sessionToken: sessionToken,
+    );
+    return StudentProfile.fromJson(Map<String, dynamic>.from(response['student'] as Map));
+  }
+
+  /// Deletes the student's own account and face data (withdrawing consent).
+  Future<void> deleteAccount(String sessionToken) async {
+    await _deleteJson('/api/students/me', sessionToken: sessionToken);
   }
 
   Future<StudentSession> faceLogin(File photo) async {
@@ -99,6 +122,8 @@ class StudentApiClient {
       rethrow;
     } on SchoolIdRequiredException {
       rethrow;
+    } on ConsentRequiredException {
+      rethrow;
     } catch (e, st) {
       debugPrint('[QueuEx DEBUG] GET $uri failed: ${e.runtimeType}: $e');
       debugPrint('[QueuEx DEBUG] stack: $st');
@@ -128,6 +153,8 @@ class StudentApiClient {
       rethrow;
     } on SchoolIdRequiredException {
       rethrow;
+    } on ConsentRequiredException {
+      rethrow;
     } catch (e, st) {
       debugPrint('[QueuEx DEBUG] POST $uri failed: ${e.runtimeType}: $e');
       debugPrint('[QueuEx DEBUG] stack: $st');
@@ -148,6 +175,8 @@ class StudentApiClient {
     } on QueueApiException {
       rethrow;
     } on SchoolIdRequiredException {
+      rethrow;
+    } on ConsentRequiredException {
       rethrow;
     } catch (e, st) {
       debugPrint('[QueuEx DEBUG] DELETE $uri failed: ${e.runtimeType}: $e');
@@ -178,6 +207,8 @@ class StudentApiClient {
       rethrow;
     } on SchoolIdRequiredException {
       rethrow;
+    } on ConsentRequiredException {
+      rethrow;
     } catch (e, st) {
       debugPrint('[QueuEx DEBUG] MULTIPART $uri failed: ${e.runtimeType}: $e');
       debugPrint('[QueuEx DEBUG] stack: $st');
@@ -206,6 +237,9 @@ class StudentApiClient {
       final detail = json['detail'] ?? json['message'];
       if (detail == 'school_id_required') {
         throw const SchoolIdRequiredException();
+      }
+      if (detail == 'consent_required') {
+        throw const ConsentRequiredException();
       }
       final message = detail ?? 'Request failed.';
       throw QueueApiException(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/consent_flow.dart';
 import '../services/queue_navigation.dart';
 import '../services/queue_session_store.dart';
 import '../services/student_session_store.dart';
@@ -259,6 +260,23 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4), indent: 16, endIndent: 16),
                         _SettingRow(
+                          icon: Icons.privacy_tip_outlined,
+                          label: 'Privacy notice',
+                          onTap: () => showPrivacyNotice(context),
+                        ),
+                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4), indent: 16, endIndent: 16),
+                        if (isStudent) ...[
+                          _SettingRow(
+                            icon: Icons.delete_forever_outlined,
+                            label: 'Delete my account',
+                            labelColor: AppColors.red,
+                            iconColor: AppColors.red,
+                            showChevron: false,
+                            onTap: () => _confirmDeleteAccount(context),
+                          ),
+                          Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4), indent: 16, endIndent: 16),
+                        ],
+                        _SettingRow(
                           icon: isStudent ? Icons.logout_rounded : Icons.clear_all_rounded,
                           label: isStudent ? 'Log out of my account' : 'Clear active ticket',
                           labelColor: AppColors.red,
@@ -297,6 +315,43 @@ class ProfileScreen extends StatelessWidget {
           }
         },
       ),
+    );
+  }
+}
+
+/// Withdrawing consent: deletes the account and its face data after an
+/// explicit confirmation, then returns to the sign-in screen.
+Future<void> _confirmDeleteAccount(BuildContext context) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Delete your account?'),
+      content: const Text(
+        'This permanently deletes your QueuEx account and your face data. '
+        'You can register again later, or use a printed kiosk ticket.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: const Text('Delete', style: TextStyle(color: AppColors.red)),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+  try {
+    QueueSessionStore.clear();
+    await StudentSessionStore.deleteAccount();
+    if (!context.mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, '/student/login', (route) => false);
+  } catch (_) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Couldn't delete your account. Check your connection and try again.")),
     );
   }
 }

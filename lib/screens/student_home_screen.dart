@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/queue_models.dart';
+import '../services/consent_flow.dart';
 import '../services/queue_navigation.dart';
+import '../services/student_api.dart';
 import '../services/queue_session_store.dart';
 import '../services/student_session_store.dart';
 import '../theme/app_theme.dart';
@@ -111,6 +113,15 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         _joined = value;
         _joinBusy = false;
       });
+    } on ConsentRequiredException {
+      // The privacy notice changed since this student last agreed.
+      if (!mounted) return;
+      setState(() => _joinBusy = false);
+      if (await ensureStudentConsent(context)) {
+        await _setJoined(value);
+      } else if (mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/student/login', (_) => false);
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _joinBusy = false);

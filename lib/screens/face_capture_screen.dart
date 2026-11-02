@@ -6,6 +6,8 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../services/camera_ml_kit.dart';
+import '../services/consent_flow.dart';
+import '../services/student_api.dart';
 import '../services/queue_api.dart';
 import '../services/queue_navigation.dart';
 import '../services/student_session_store.dart';
@@ -299,6 +301,15 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
         return;
       }
       Navigator.of(context).pushReplacementNamed('/student/home');
+    } on ConsentRequiredException {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      if (!await ensureStudentConsent(context) && mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/student/login', (_) => false);
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _errorMessage = 'Thank you. Tap save again to register your face.');
     } on QueueApiException catch (error) {
       if (!mounted) return;
       setState(() {

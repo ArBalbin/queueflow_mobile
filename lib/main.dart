@@ -13,6 +13,7 @@ import 'screens/student_login_screen.dart';
 import 'screens/school_id_screen.dart';
 import 'screens/face_capture_screen.dart';
 import 'screens/student_home_screen.dart';
+import 'services/consent_flow.dart';
 import 'services/queue_navigation.dart';
 import 'services/queue_session_store.dart';
 import 'services/student_session_store.dart';
@@ -77,6 +78,13 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
 
   Future<void> _decide() async {
     final restored = await StudentSessionStore.restoreSession();
+    if (!mounted) return;
+
+    if (restored && !await ensureStudentConsent(context)) {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/student/login');
+      return;
+    }
     if (!mounted) return;
 
     if (restored) {

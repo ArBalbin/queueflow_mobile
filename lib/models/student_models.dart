@@ -4,11 +4,16 @@ class StudentProfile {
   final String? fullName;
   final bool hasFaceEmbedding;
 
+  /// The student has not agreed to the current data-privacy notice; the app
+  /// must show it before they can queue or enrol a face.
+  final bool consentRequired;
+
   const StudentProfile({
     required this.studentId,
     required this.schoolId,
     this.fullName,
     required this.hasFaceEmbedding,
+    this.consentRequired = false,
   });
 
   factory StudentProfile.fromJson(Map<String, dynamic> json) {
@@ -17,6 +22,7 @@ class StudentProfile {
       schoolId: (json['school_id'] ?? '').toString(),
       fullName: json['full_name'] as String?,
       hasFaceEmbedding: json['has_face_embedding'] == true,
+      consentRequired: json['consent_required'] == true,
     );
   }
 }
