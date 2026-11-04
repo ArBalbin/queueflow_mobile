@@ -16,6 +16,10 @@ const String faceCaptureSignupArgument = 'signup';
 /// finished, so it can say so rather than reappearing with no explanation.
 const String loginRegisteredArgument = 'registered';
 
+/// Route argument telling the login screen the student was signed out for
+/// leaving the app unused, so the return to sign-in is explained.
+const String loginIdleArgument = 'idle';
+
 String routeForQueueSnapshot(QueueSnapshot snapshot) {
   final status = snapshot.status;
   if (status.isDone) return '/queue/exit';

@@ -14,12 +14,18 @@ import 'screens/school_id_screen.dart';
 import 'screens/face_capture_screen.dart';
 import 'screens/student_home_screen.dart';
 import 'services/consent_flow.dart';
+import 'services/idle_logout.dart';
 import 'services/queue_navigation.dart';
 import 'services/queue_session_store.dart';
 import 'services/student_session_store.dart';
 
+/// Lets the idle sign-out return to the login screen from wherever the
+/// student is when the app is reopened.
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  IdleLogout(appNavigatorKey).start();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Color(0xFF1A1A2E),
@@ -35,6 +41,7 @@ class QueueFlowApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: appNavigatorKey,
       title: 'QueuEx',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
@@ -78,6 +85,20 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
 
   Future<void> _decide() async {
     final restored = await StudentSessionStore.restoreSession();
+    if (!mounted) return;
+
+    // Reopening the app after it sat unused ends the saved session, unless
+    // the student is in the queue.
+    if (restored && await IdleLogout.shouldSignOut()) {
+      await IdleLogout.signOut();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(
+        '/student/login',
+        arguments: loginIdleArgument,
+      );
+      return;
+    }
+    if (restored) await IdleLogout.markActive();
     if (!mounted) return;
 
     if (restored && !await ensureStudentConsent(context)) {

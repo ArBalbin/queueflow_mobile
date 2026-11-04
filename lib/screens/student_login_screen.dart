@@ -141,8 +141,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final justRegistered =
-        ModalRoute.of(context)?.settings.arguments == loginRegisteredArgument;
+    final routeArgument = ModalRoute.of(context)?.settings.arguments;
+    final justRegistered = routeArgument == loginRegisteredArgument;
+    final signedOutIdle = routeArgument == loginIdleArgument;
     // Increased height ratio to give more space to the top image and logo
     final imageHeight = screenHeight * 0.44;
 
@@ -250,6 +251,26 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
 
                       // Shown after sign-up returns here. Hidden as soon as an
                       // error appears, so the two never stack.
+                      if (signedOutIdle && _errorMessage == null) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.amberLight,
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: const Text(
+                            'You were signed out because QueuEx was not used '
+                            'for 30 minutes. Log in again to continue.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              height: 1.4,
+                              color: AppColors.amberText,
+                            ),
+                          ),
+                        ),
+                      ],
                       if (justRegistered && _errorMessage == null) ...[
                         const SizedBox(height: 12),
                         Container(

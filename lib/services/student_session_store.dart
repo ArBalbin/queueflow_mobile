@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/student_models.dart';
 import 'google_auth_config.dart';
+import 'idle_logout.dart';
 import 'queue_api.dart';
 import 'student_api.dart';
 
@@ -48,6 +49,8 @@ class StudentSessionStore {
     await prefs.setString(_tokenKey, session.sessionToken);
     _sessionToken = session.sessionToken;
     profile = session.profile;
+    // A fresh sign-in starts the idle clock again.
+    await IdleLogout.markActive();
   }
 
   /// Opens the Google account picker and returns the ID token. Returns null
