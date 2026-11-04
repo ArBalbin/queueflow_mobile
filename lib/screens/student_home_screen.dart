@@ -336,6 +336,19 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           ),
         ),
       ),
+      // The dashboard is the "My Queue" tab for a student who has no number
+      // yet. Without the bar here, History, Profile and Help were reachable
+      // only after the camera issued a number, from the queue screens.
+      bottomNavigationBar: QBottomNavBar(
+        currentIndex: 0,
+        onTap: (i) {
+          if (i == 0) {
+            _refresh();
+          } else {
+            Navigator.pushReplacementNamed(context, routeForBottomNavIndex(i));
+          }
+        },
+      ),
     );
   }
 }
