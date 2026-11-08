@@ -101,7 +101,7 @@ class HelpScreen extends StatelessWidget {
               icon: Icons.check_box_rounded,
               title: 'Check your status',
               body:
-                  'Use your queue number and token to track your position anytime.',
+                  'Use your queue number and ticket code to track your position anytime.',
             ),
             const SizedBox(height: 12),
             const _HelpCard(

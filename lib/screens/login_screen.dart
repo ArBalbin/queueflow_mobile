@@ -35,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (queue.isEmpty || token.isEmpty) {
       setState(
         () =>
-            _errorMessage = 'Please enter both queue number and access token.',
+            _errorMessage = 'Please enter both your queue number and ticket code.',
       );
       return;
     }
@@ -168,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
               _InputField(
-                label: 'ACCESS TOKEN',
+                label: 'TICKET CODE',
                 hint: 'Enter your unique code',
                 controller: _tokenController,
                 isPassword: true,
@@ -209,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Token is shown on your queue slip',
+                'The code is printed on your queue slip',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 11, color: AppColors.textLight),
               ),

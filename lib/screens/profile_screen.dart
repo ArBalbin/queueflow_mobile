@@ -21,8 +21,8 @@ class ProfileScreen extends StatelessWidget {
         credentials?.queueLabel ??
         'No active queue';
     final tokenLabel = credentials == null
-        ? 'Token: not loaded'
-        : 'Token: ${credentials.maskedToken}';
+        ? 'Ticket code: not loaded'
+        : 'Ticket code: ${credentials.maskedToken}';
     final statusLabel = snapshot?.status.status ?? 'Not checked';
 
     final displayName = isStudent && studentProfile.fullName?.isNotEmpty == true
@@ -166,7 +166,7 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SectionLabel('My active token'),
+                  const SectionLabel('My ticket code'),
                   const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.all(18),

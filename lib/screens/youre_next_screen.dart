@@ -736,7 +736,7 @@ class _EmptyNextState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Enter your queue number and access token to check your live status.',
+            'Enter your queue number and ticket code to check your live status.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.4),
           ),
