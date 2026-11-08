@@ -372,7 +372,7 @@ class _WaitingBody extends StatelessWidget {
               ? 'Now serving'
               : 'Position ${person.position}',
           subtitle: isCurrentUser
-              ? status.estimatedWaitLabel
+              ? status.estimatedWaitWithRange
               : person.estimatedWaitLabel,
           circBg: isCurrentUser
               ? AppColors.dark
@@ -405,9 +405,11 @@ class _WaitingBody extends StatelessWidget {
     }).toList();
   }
 
+  // Rounded the same way as the server's label, so this figure and
+  // "3 mins" beside it never disagree (rounding up showed 1.1 as ~2).
   String _waitValue(double minutes) {
-    if (minutes <= 0) return '<1';
-    return '~${minutes.ceil()}';
+    if (minutes < 1) return '<1';
+    return '~${minutes.round()}';
   }
 }
 

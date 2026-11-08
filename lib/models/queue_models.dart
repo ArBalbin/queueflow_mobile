@@ -57,6 +57,9 @@ class QueueEstimate {
   final int position;
   final double estimatedWaitMinutes;
   final String estimatedWaitLabel;
+  // Where the wait usually falls, e.g. "usually 0–9 mins". Empty when the
+  // backend sends none (an older server, or a ticket out of the line).
+  final String estimatedWaitRangeLabel;
   final String? estimatedServiceStartAt;
   final String? estimatedServiceFinishAt;
   final double estimatedServiceTimeMinutes;
@@ -65,6 +68,7 @@ class QueueEstimate {
     required this.position,
     required this.estimatedWaitMinutes,
     required this.estimatedWaitLabel,
+    this.estimatedWaitRangeLabel = '',
     required this.estimatedServiceStartAt,
     required this.estimatedServiceFinishAt,
     required this.estimatedServiceTimeMinutes,
@@ -82,6 +86,7 @@ class QueueEstimate {
         json['estimated_wait_time_label'],
         waitMinutes < 1 ? 'less than 1 min' : '${waitMinutes.round()} min',
       ),
+      estimatedWaitRangeLabel: _readString(json['estimated_wait_range_label']),
       estimatedServiceStartAt: json['estimated_service_start_at']?.toString(),
       estimatedServiceFinishAt: json['estimated_service_finish_at']?.toString(),
       estimatedServiceTimeMinutes: _readDouble(
@@ -158,6 +163,13 @@ class QueueStatus {
 
   String get estimatedWaitLabel =>
       prediction?.estimatedWaitLabel ?? 'less than 1 min';
+
+  /// The estimate with its usual range, e.g. "3 mins · usually 0–10 mins".
+  /// The estimate alone is often off by a few minutes; the range says how far.
+  String get estimatedWaitWithRange {
+    final range = prediction?.estimatedWaitRangeLabel ?? '';
+    return range.isEmpty ? estimatedWaitLabel : '$estimatedWaitLabel · $range';
+  }
 
   QueueStatus copyWith({bool? onTheWay, String? onTheWayAt}) {
     return QueueStatus(

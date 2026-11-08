@@ -443,9 +443,10 @@ class _NextBody extends StatelessWidget {
     );
   }
 
+  // Rounded the same way as the server's label (see queue_waiting_screen).
   String _waitValue(double minutes) {
-    if (minutes <= 0) return '<1';
-    return '~${minutes.ceil()}';
+    if (minutes < 1) return '<1';
+    return '~${minutes.round()}';
   }
 }
 
