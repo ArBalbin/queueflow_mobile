@@ -22,12 +22,13 @@ void main() {
   });
 
   group('the screen for a ticket follows its status', () {
-    QueueSnapshot snapshot(String status, {int position = 0}) => QueueSnapshot(
+    QueueSnapshot snapshot(String status, {int position = 0, int? counter}) => QueueSnapshot(
           credentials: const QueueCredentials(queueNumber: 7, accessToken: 'ABCD-EFGH'),
           status: QueueStatus.fromJson({
             'queue_number': 7,
             'status': status,
             'position_in_line': position,
+            'counter_number': counter,
           }),
           prediction: QueuePrediction.fromJson(const {}),
         );
@@ -39,6 +40,17 @@ void main() {
     test('a served ticket still goes to the exit screen', () {
       expect(routeForQueueSnapshot(snapshot('done_pending')), '/queue/exit');
       expect(routeForQueueSnapshot(snapshot('served')), '/queue/exit');
+    });
+
+    test("a ticket called to a window shows It's your turn, at any position", () {
+      expect(routeForQueueSnapshot(snapshot('waiting', position: 1, counter: 1)), '/queue/serving');
+      expect(routeForQueueSnapshot(snapshot('waiting', position: 3, counter: 3)), '/queue/serving',
+          reason: 'with three windows, the third in line is being served too');
+    });
+
+    test('finishing or skipping at a window leaves the serving screen', () {
+      expect(routeForQueueSnapshot(snapshot('done_pending', counter: 2)), '/queue/exit');
+      expect(routeForQueueSnapshot(snapshot('no_show', counter: 2)), '/queue/skipped');
     });
 
     test('a waiting ticket is next at position 1, otherwise waiting', () {

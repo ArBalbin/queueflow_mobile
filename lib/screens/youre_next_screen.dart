@@ -6,6 +6,7 @@ import '../services/queue_api.dart';
 import '../services/queue_navigation.dart';
 import '../services/queue_session_store.dart';
 import '../theme/app_theme.dart';
+import '../widgets/now_serving_card.dart';
 import '../widgets/shared_widgets.dart';
 
 class YoureNextScreen extends StatefulWidget {
@@ -265,34 +266,35 @@ class _NextBody extends StatelessWidget {
                             ),
                             const SizedBox(height: 20),
                             Row(
-                          children: [
-                            Expanded(
-                              child: _StatChip(
-                                icon: Icons.people_alt_rounded,
-                                value: '${status.aheadCount}',
-                                label: 'Ahead of you',
-                              ),
+                              children: [
+                                Expanded(
+                                  child: _StatChip(
+                                    icon: Icons.people_alt_rounded,
+                                    value: '${status.aheadCount}',
+                                    label: 'Ahead of you',
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: _StatChip(
+                                    icon: Icons.schedule_rounded,
+                                    value:
+                                        '${_waitValue(status.estimatedWaitMinutes)} min',
+                                    label: 'Est. wait',
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: _StatChip(
+                                    icon: Icons.storefront_rounded,
+                                    value: snapshot.activeCounters > 0
+                                        ? '${snapshot.activeCounters}'
+                                        : '-',
+                                    label: 'Counters open',
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _StatChip(
-                                icon: Icons.schedule_rounded,
-                                value: '${_waitValue(status.estimatedWaitMinutes)} min',
-                                label: 'Est. wait',
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _StatChip(
-                                icon: Icons.storefront_rounded,
-                                value: snapshot.activeCounters > 0
-                                    ? '${snapshot.activeCounters}'
-                                    : '-',
-                                label: 'Counters open',
-                              ),
-                            ),
-                          ],
-                        ),
                           ],
                         ),
                       ),
@@ -314,6 +316,46 @@ class _NextBody extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                         ],
+                        // Staff call each number from their window, so the
+                        // student waits to be called rather than walking up.
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.greenLight,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: AppColors.green.withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: const Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.campaign_rounded,
+                                color: AppColors.green,
+                                size: 20,
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Wait for a window to call your number. When one does, '
+                                  'this screen tells you which window to go to.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.dark,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        NowServingCard(
+                          prediction: snapshot.prediction,
+                          myQueueNumber: status.queueNumber,
+                        ),
+                        const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
@@ -346,7 +388,9 @@ class _NextBody extends StatelessWidget {
                                 label: hasNotifiedStaff
                                     ? 'Notified staff you are on your way'
                                     : 'Notify staff when you head over',
-                                time: hasNotifiedStaff ? status.onTheWayAt : null,
+                                time: hasNotifiedStaff
+                                    ? status.onTheWayAt
+                                    : null,
                                 done: hasNotifiedStaff,
                                 active: !hasNotifiedStaff,
                                 isLast: true,
@@ -385,10 +429,14 @@ class _NextBody extends StatelessWidget {
                               ),
                               const SizedBox(height: 18),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
                                 children: [
+                                  // The person just ahead in line, who may not be at a
+                                  // window yet; the windows themselves are in the Now
+                                  // serving card above.
                                   _PersonAvatar(
-                                    label: 'Now serving',
+                                    label: 'Ahead of you',
                                     number: previousPerson?.queueDigits ?? '—',
                                     color: AppColors.amberBright,
                                   ),
@@ -468,7 +516,11 @@ class _StatChip extends StatelessWidget {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
-          BoxShadow(color: Color(0x1A000000), blurRadius: 10, offset: Offset(0, 4)),
+          BoxShadow(
+            color: Color(0x1A000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -566,7 +618,10 @@ class _TimelineStep extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       time!,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                   ],
                 ],
@@ -650,7 +705,11 @@ class _BottomActionBar extends StatelessWidget {
       decoration: const BoxDecoration(
         color: AppColors.white,
         boxShadow: [
-          BoxShadow(color: Color(0x14000000), blurRadius: 16, offset: Offset(0, -4)),
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 16,
+            offset: Offset(0, -4),
+          ),
         ],
       ),
       child: Row(
@@ -738,7 +797,11 @@ class _EmptyNextState extends StatelessWidget {
           const Text(
             'Enter your queue number and ticket code to check your live status.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.4),
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textMuted,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 20),
           PrimaryButton(
@@ -746,7 +809,8 @@ class _EmptyNextState extends StatelessWidget {
             bg: AppColors.green,
             padding: const EdgeInsets.symmetric(vertical: 15),
             fontSize: 14,
-            onTap: () => Navigator.pushReplacementNamed(context, '/ticket/lookup'),
+            onTap: () =>
+                Navigator.pushReplacementNamed(context, '/ticket/lookup'),
           ),
         ],
       ),

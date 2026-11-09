@@ -26,6 +26,9 @@ String routeForQueueSnapshot(QueueSnapshot snapshot) {
   // and used to fall through to the waiting screen with no explanation.
   if (status.isNoShow) return '/queue/skipped';
   if (status.isDone) return '/queue/exit';
+  // Called to a window. With several windows open this happens at positions
+  // 2 and 3 as well, which used to show "Waiting in line".
+  if (status.isBeingServed) return '/queue/serving';
   if (status.isNext) return '/queue/next';
   return '/queue/waiting';
 }
