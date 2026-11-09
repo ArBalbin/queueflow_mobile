@@ -236,6 +236,28 @@ class QueuePerson {
   String get queueDigits => queueNumber.toString().padLeft(3, '0');
 }
 
+/// One cashier window and the number being served there.
+class NowServing {
+  final int counterNumber;
+  final int queueNumber;
+  final String queueLabel;
+
+  const NowServing({
+    required this.counterNumber,
+    required this.queueNumber,
+    required this.queueLabel,
+  });
+
+  factory NowServing.fromJson(Map<String, dynamic> json) {
+    final queueNumber = _readInt(json['queue_number']);
+    return NowServing(
+      counterNumber: _readInt(json['counter_number']),
+      queueNumber: queueNumber,
+      queueLabel: _readString(json['queue_label'], formatQueueLabel(queueNumber)),
+    );
+  }
+}
+
 class QueuePrediction {
   final int queueLength;
   final int activeCounters;
@@ -246,12 +268,24 @@ class QueuePrediction {
   /// e.g. "about 12 min" — from the backend's `new_arrival` block.
   final String newArrivalWaitLabel;
 
+  /// The same estimate in minutes, to decide whether the line is long.
+  final double newArrivalWaitMinutes;
+
+  /// Who is at each window, ordered by window.
+  final List<NowServing> nowServing;
+
+  /// Set while staff have closed every window (lunch), in local time.
+  final DateTime? countersClosedUntil;
+
   const QueuePrediction({
     required this.queueLength,
     required this.activeCounters,
     required this.dataStatus,
     required this.activeQueue,
     this.newArrivalWaitLabel = '—',
+    this.newArrivalWaitMinutes = 0,
+    this.nowServing = const [],
+    this.countersClosedUntil,
   });
 
   factory QueuePrediction.fromJson(Map<String, dynamic> json) {
@@ -271,6 +305,22 @@ class QueuePrediction {
     final waitLabel = newArrival is Map
         ? _readString(newArrival['estimated_wait_time_label'], '—')
         : '—';
+    final waitMinutes = newArrival is Map
+        ? _readDouble(newArrival['estimated_wait_time_minutes'])
+        : 0.0;
+
+    final rawServing = json['now_serving'];
+    final serving = rawServing is List
+        ? rawServing
+              .whereType<Map>()
+              .map((item) => NowServing.fromJson(Map<String, dynamic>.from(item)))
+              .where((entry) => entry.counterNumber > 0 && entry.queueNumber > 0)
+              .toList()
+        : <NowServing>[];
+    serving.sort((a, b) => a.counterNumber.compareTo(b.counterNumber));
+
+    final closedRaw = json['counters_closed_until'];
+    final closedUntil = closedRaw is String ? DateTime.tryParse(closedRaw)?.toLocal() : null;
 
     return QueuePrediction(
       queueLength: _readInt(json['queue_length']),
@@ -278,6 +328,9 @@ class QueuePrediction {
       dataStatus: _readString(json['data_status'], 'live'),
       activeQueue: people,
       newArrivalWaitLabel: waitLabel,
+      newArrivalWaitMinutes: waitMinutes,
+      nowServing: serving,
+      countersClosedUntil: closedUntil,
     );
   }
 

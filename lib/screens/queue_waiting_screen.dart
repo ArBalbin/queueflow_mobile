@@ -1,11 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/queue_models.dart';
+import '../services/long_wait.dart';
 import '../services/queue_api.dart';
 import '../services/queue_navigation.dart';
 import '../services/queue_session_store.dart';
 import '../theme/app_theme.dart';
+import '../widgets/now_serving_card.dart';
 import '../widgets/shared_widgets.dart';
 
 class QueueWaitingScreen extends StatefulWidget {
@@ -34,6 +37,37 @@ class _QueueWaitingScreenState extends State<QueueWaitingScreen> {
     super.dispose();
   }
 
+  /// Once per ticket, when the estimate first reaches a long wait: a buzz and
+  /// a message, so a student with the phone away is not left guessing.
+  void _warnIfLongWait(QueueSnapshot snapshot) {
+    final status = snapshot.status;
+    if (!LongWaitNotice.shouldShow(
+      status.queueNumber,
+      status.estimatedWaitMinutes,
+    )) {
+      return;
+    }
+    LongWaitNotice.markShown(status.queueNumber);
+    HapticFeedback.mediumImpact();
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('This will be a long wait'),
+        content: Text(
+          'Your number should be called in ${describeWait(status.estimatedWaitMinutes)}. '
+          'Stay near the queue area so you do not miss it; this screen updates as '
+          'the line moves.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _refresh({bool showSpinner = false}) async {
     if (_isRefreshing || !QueueSessionStore.hasSession) return;
     if (showSpinner && mounted) {
@@ -55,6 +89,7 @@ class _QueueWaitingScreenState extends State<QueueWaitingScreen> {
         _errorMessage = null;
         _isRefreshing = false;
       });
+      _warnIfLongWait(snapshot);
     } on QueueApiException catch (error) {
       if (!mounted) return;
       if (error.statusCode == 404 && _snapshot != null) {
@@ -225,58 +260,58 @@ class _WaitingBody extends StatelessWidget {
                             ),
                             const SizedBox(height: 20),
                             Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 14,
-                            horizontal: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x1A000000),
-                                blurRadius: 12,
-                                offset: Offset(0, 4),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                                horizontal: 12,
                               ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _StatColumn(
-                                  value: '${status.aheadCount}',
-                                  label: 'Ahead of you',
-                                ),
-                              ),
-                              Container(
-                                width: 1,
-                                height: 28,
-                                color: AppColors.border,
-                              ),
-                              Expanded(
-                                child: _StatColumn(
-                                  value: _waitValue(
-                                    status.estimatedWaitMinutes,
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x1A000000),
+                                    blurRadius: 12,
+                                    offset: Offset(0, 4),
                                   ),
-                                  label: 'Est. wait (min)',
-                                ),
+                                ],
                               ),
-                              Container(
-                                width: 1,
-                                height: 28,
-                                color: AppColors.border,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _StatColumn(
+                                      value: '${status.aheadCount}',
+                                      label: 'Ahead of you',
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 1,
+                                    height: 28,
+                                    color: AppColors.border,
+                                  ),
+                                  Expanded(
+                                    child: _StatColumn(
+                                      value: _waitValue(
+                                        status.estimatedWaitMinutes,
+                                      ),
+                                      label: 'Est. wait (min)',
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 1,
+                                    height: 28,
+                                    color: AppColors.border,
+                                  ),
+                                  Expanded(
+                                    child: _StatColumn(
+                                      value: snapshot.activeCounters > 0
+                                          ? '${snapshot.activeCounters}'
+                                          : '-',
+                                      label: 'Counters open',
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Expanded(
-                                child: _StatColumn(
-                                  value: snapshot.activeCounters > 0
-                                      ? '${snapshot.activeCounters}'
-                                      : '-',
-                                  label: 'Counters open',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                            ),
                           ],
                         ),
                       ),
@@ -298,6 +333,23 @@ class _WaitingBody extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                         ],
+                        if (isLongWait(status.estimatedWaitMinutes)) ...[
+                          AlertBanner(
+                            text:
+                                'Long wait: ${describeWait(status.estimatedWaitMinutes)} before your '
+                                'number is called. Stay near the queue area so you do not miss it.',
+                            bg: AppColors.amberLight,
+                            borderColor: AppColors.amberBright,
+                            dotColor: AppColors.amberBright,
+                            textColor: AppColors.amberText,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        NowServingCard(
+                          prediction: snapshot.prediction,
+                          myQueueNumber: status.queueNumber,
+                        ),
+                        const SizedBox(height: 16),
                         const Row(
                           children: [
                             Icon(

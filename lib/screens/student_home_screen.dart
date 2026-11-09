@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 
 import '../models/queue_models.dart';
 import '../services/consent_flow.dart';
+import '../services/long_wait.dart';
 import '../services/queue_navigation.dart';
 import '../services/student_api.dart';
 import '../services/queue_session_store.dart';
 import '../services/student_session_store.dart';
 import '../theme/app_theme.dart';
+import '../widgets/now_serving_card.dart';
 import '../widgets/shared_widgets.dart';
 
 class StudentHomeScreen extends StatefulWidget {
@@ -49,7 +51,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   Future<void> _pollLoop(int chain) async {
     await _refresh();
     if (!mounted || chain != _pollChain || _isNavigating) return;
-    _pollTimer = Timer(_joined ? _pollWhileJoined : _pollIdle, () => _pollLoop(chain));
+    _pollTimer = Timer(
+      _joined ? _pollWhileJoined : _pollIdle,
+      () => _pollLoop(chain),
+    );
   }
 
   @override
@@ -69,11 +74,16 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     try {
       final entry = await StudentSessionStore.api.getMyQueueEntry(token);
 
-      if (entry.hasActiveEntry && entry.queueNumber != null && entry.accessToken != null) {
+      if (entry.hasActiveEntry &&
+          entry.queueNumber != null &&
+          entry.accessToken != null) {
         _isNavigating = true;
         try {
           final snapshot = await QueueSessionStore.startSessionWithCredentials(
-            QueueCredentials(queueNumber: entry.queueNumber!, accessToken: entry.accessToken!),
+            QueueCredentials(
+              queueNumber: entry.queueNumber!,
+              accessToken: entry.accessToken!,
+            ),
           );
           if (!mounted) return;
 
@@ -84,7 +94,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           }
 
           _pollTimer?.cancel();
-          Navigator.of(context).pushReplacementNamed(routeForQueueSnapshot(snapshot));
+          Navigator.of(
+            context,
+          ).pushReplacementNamed(routeForQueueSnapshot(snapshot));
         } catch (e) {
           // The entry is real and still waiting — only fetching its detail
           // failed, which the deployed backend makes likely: measured 559ms
@@ -139,7 +151,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       if (await ensureStudentConsent(context)) {
         await _setJoined(value);
       } else if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/student/login', (_) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/student/login', (_) => false);
       }
     } catch (_) {
       if (!mounted) return;
@@ -156,6 +170,36 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     }
   }
 
+  /// Joins, but first says so when the line is long, so the student can
+  /// decide to come back later instead.
+  Future<void> _joinWithWaitCheck() async {
+    final minutes = _prediction?.newArrivalWaitMinutes ?? 0;
+    if (isLongWait(minutes)) {
+      final join = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('The line is long right now'),
+          content: Text(
+            'Someone joining now waits ${describeWait(minutes)} before being called. '
+            'Join anyway?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Not now'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Join anyway'),
+            ),
+          ],
+        ),
+      );
+      if (join != true || !mounted) return;
+    }
+    await _setJoined(true);
+  }
+
   Future<void> _fetchPrediction() async {
     try {
       final prediction = await QueueSessionStore.api.fetchQueuePrediction();
@@ -166,10 +210,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   Future<void> _logout(BuildContext context) async {
     await StudentSessionStore.logout();
     if (!context.mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      '/student/login',
-      (route) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil('/student/login', (route) => false);
   }
 
   @override
@@ -177,7 +220,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     final profile = StudentSessionStore.profile;
     final faceRegistered = profile?.hasFaceEmbedding == true;
     final prediction = _prediction;
-    final name = profile?.fullName?.isNotEmpty == true ? profile!.fullName! : 'Student';
+    final name = profile?.fullName?.isNotEmpty == true
+        ? profile!.fullName!
+        : 'Student';
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -186,7 +231,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         elevation: 0,
         automaticallyImplyLeading: false,
         titleSpacing: 20,
-        title: Image.asset('assets/img/Logo.png', height: 26, fit: BoxFit.contain),
+        title: Image.asset(
+          'assets/img/Logo.png',
+          height: 26,
+          fit: BoxFit.contain,
+        ),
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -207,8 +256,26 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               _StatsCard(
                 inLine: prediction == null ? '—' : '${prediction.queueLength}',
                 wait: prediction == null ? '—' : prediction.newArrivalWaitLabel,
-                counters: prediction == null ? '—' : '${prediction.activeCounters}',
+                counters: prediction == null
+                    ? '—'
+                    : '${prediction.activeCounters}',
               ),
+              if (prediction != null) ...[
+                if (isLongWait(prediction.newArrivalWaitMinutes)) ...[
+                  const SizedBox(height: 12),
+                  AlertBanner(
+                    text:
+                        'The line is long right now: ${describeWait(prediction.newArrivalWaitMinutes)} '
+                        'for someone joining now.',
+                    bg: AppColors.amberLight,
+                    borderColor: AppColors.amberBright,
+                    dotColor: AppColors.amberBright,
+                    textColor: AppColors.amberText,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                NowServingCard(prediction: prediction),
+              ],
               const SizedBox(height: 20),
 
               const SectionLabel('YOUR STATUS'),
@@ -225,7 +292,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   action: PrimaryButton(
                     label: 'Register My Face',
                     bg: AppColors.green,
-                    onTap: () => Navigator.of(context).pushNamed('/student/face-capture'),
+                    onTap: () => Navigator.of(
+                      context,
+                    ).pushNamed('/student/face-capture'),
                   ),
                 )
               else if (_queueState == 'recognized_not_joined')
@@ -241,7 +310,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   action: PrimaryButton(
                     label: _joinBusy ? 'Joining…' : 'Join the Queue',
                     bg: AppColors.green,
-                    onTap: _joinBusy ? null : () => _setJoined(true),
+                    onTap: _joinBusy ? null : _joinWithWaitCheck,
                   ),
                 )
               else if (_queueState == 'recently_skipped')
@@ -257,7 +326,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   action: PrimaryButton(
                     label: _joinBusy ? 'Joining…' : 'Join the Queue',
                     bg: AppColors.green,
-                    onTap: _joinBusy ? null : () => _setJoined(true),
+                    onTap: _joinBusy ? null : _joinWithWaitCheck,
                   ),
                 )
               else if (_queueState == 'recently_served')
@@ -274,7 +343,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     outlined: true,
                     borderColor: AppColors.borderMid,
                     fg: AppColors.dark,
-                    onTap: _joinBusy ? null : () => _setJoined(true),
+                    onTap: _joinBusy ? null : _joinWithWaitCheck,
                   ),
                 )
               else if (_pendingLink || _queueState == 'identifying')
@@ -291,7 +360,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       const SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.green),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.green,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Text('Please wait', style: AppText.caption),
@@ -309,7 +381,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       'your number automatically. This screen opens your live status the '
                       'moment it does.',
                   action: PrimaryButton(
-                    label: _joinBusy ? 'Cancelling…' : "Cancel — I'm not queueing",
+                    label: _joinBusy
+                        ? 'Cancelling…'
+                        : "Cancel — I'm not queueing",
                     outlined: true,
                     borderColor: AppColors.borderMid,
                     fg: AppColors.dark,
@@ -328,7 +402,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   action: PrimaryButton(
                     label: _joinBusy ? 'Joining…' : 'Join the Queue',
                     bg: AppColors.green,
-                    onTap: _joinBusy ? null : () => _setJoined(true),
+                    onTap: _joinBusy ? null : _joinWithWaitCheck,
                   ),
                 ),
               const SizedBox(height: 20),
@@ -348,8 +422,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   _ActionRow(
                     icon: Icons.confirmation_number_outlined,
                     title: 'Track a printed ticket',
-                    subtitle: 'Holding a kiosk ticket instead? Check its status here.',
-                    onTap: () => Navigator.of(context).pushNamed('/ticket/lookup'),
+                    subtitle:
+                        'Holding a kiosk ticket instead? Check its status here.',
+                    onTap: () =>
+                        Navigator.of(context).pushNamed('/ticket/lookup'),
                   ),
                 ],
               ),
@@ -362,7 +438,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Text(
                       'Log Out',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.red),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.red,
+                      ),
                     ),
                   ),
                 ),
@@ -417,7 +497,11 @@ class _IdentityCard extends StatelessWidget {
               color: AppColors.greenLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.person_rounded, color: AppColors.greenDark, size: 22),
+            child: const Icon(
+              Icons.person_rounded,
+              color: AppColors.greenDark,
+              size: 22,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -445,7 +529,11 @@ class _StatsCard extends StatelessWidget {
   final String inLine;
   final String wait;
   final String counters;
-  const _StatsCard({required this.inLine, required this.wait, required this.counters});
+  const _StatsCard({
+    required this.inLine,
+    required this.wait,
+    required this.counters,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -458,11 +546,17 @@ class _StatsCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(child: _StatColumn(value: inLine, label: 'In line')),
+          Expanded(
+            child: _StatColumn(value: inLine, label: 'In line'),
+          ),
           const _StatDivider(),
-          Expanded(child: _StatColumn(value: wait, label: 'Wait now')),
+          Expanded(
+            child: _StatColumn(value: wait, label: 'Wait now'),
+          ),
           const _StatDivider(),
-          Expanded(child: _StatColumn(value: counters, label: 'Counters')),
+          Expanded(
+            child: _StatColumn(value: counters, label: 'Counters'),
+          ),
         ],
       ),
     );
@@ -491,7 +585,11 @@ class _StatColumn extends StatelessWidget {
             child: Text(
               value,
               maxLines: 1,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.dark),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.dark,
+              ),
             ),
           ),
           const SizedBox(height: 4),
@@ -546,7 +644,10 @@ class _StatusCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Icon(icon, color: iconColor, size: 20),
               ),
               const SizedBox(width: 12),
@@ -562,10 +663,7 @@ class _StatusCard extends StatelessWidget {
               ),
             ],
           ),
-          if (action != null) ...[
-            const SizedBox(height: 14),
-            action!,
-          ],
+          if (action != null) ...[const SizedBox(height: 14), action!],
         ],
       ),
     );
@@ -614,7 +712,10 @@ class _ActionRow extends StatelessWidget {
               width: 38,
               height: 38,
               alignment: Alignment.center,
-              decoration: BoxDecoration(color: AppColors.greenLight, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(
+                color: AppColors.greenLight,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Icon(icon, color: AppColors.greenDark, size: 18),
             ),
             const SizedBox(width: 12),
@@ -628,7 +729,11 @@ class _ActionRow extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.textLight, size: 18),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textLight,
+              size: 18,
+            ),
           ],
         ),
       ),
