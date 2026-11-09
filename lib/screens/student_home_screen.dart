@@ -26,12 +26,30 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   QueuePrediction? _prediction;
   bool _isNavigating = false;
   Timer? _pollTimer;
+  int _pollChain = 0;
+
+  // While the student has tapped Join and is waiting to be recognised, check
+  // every two seconds, so the screen moves to the queue soon after the number
+  // is issued. Otherwise every five, as before.
+  static const _pollWhileJoined = Duration(seconds: 2);
+  static const _pollIdle = Duration(seconds: 5);
 
   @override
   void initState() {
     super.initState();
-    _refresh();
-    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) => _refresh());
+    _restartPolling();
+  }
+
+  /// Starts a fresh chain of checks; any earlier chain stops at its next step.
+  void _restartPolling() {
+    _pollTimer?.cancel();
+    _pollLoop(++_pollChain);
+  }
+
+  Future<void> _pollLoop(int chain) async {
+    await _refresh();
+    if (!mounted || chain != _pollChain || _isNavigating) return;
+    _pollTimer = Timer(_joined ? _pollWhileJoined : _pollIdle, () => _pollLoop(chain));
   }
 
   @override
@@ -113,6 +131,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         _joined = value;
         _joinBusy = false;
       });
+      _restartPolling();
     } on ConsentRequiredException {
       // The privacy notice changed since this student last agreed.
       if (!mounted) return;
