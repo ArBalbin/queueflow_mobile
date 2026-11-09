@@ -77,7 +77,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           );
           if (!mounted) return;
 
-          if (snapshot.status.isDone) {
+          if (snapshot.status.isDone || snapshot.status.isNoShow) {
             QueueSessionStore.clear();
             _isNavigating = false;
             return;
@@ -238,6 +238,22 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       'You had not joined the queue yet when the camera saw you, so no '
                       'number was issued. Tap below to join, then stay in view for a '
                       'few seconds.',
+                  action: PrimaryButton(
+                    label: _joinBusy ? 'Joining…' : 'Join the Queue',
+                    bg: AppColors.green,
+                    onTap: _joinBusy ? null : () => _setJoined(true),
+                  ),
+                )
+              else if (_queueState == 'recently_skipped')
+                _StatusCard(
+                  icon: Icons.person_off_rounded,
+                  iconBg: AppColors.amberLight,
+                  iconColor: AppColors.amberBright,
+                  title: 'Your number was skipped',
+                  message:
+                      'Staff marked you as not present when your number was called. '
+                      'Step away from the camera for a few seconds, then join again '
+                      'to get a new number.',
                   action: PrimaryButton(
                     label: _joinBusy ? 'Joining…' : 'Join the Queue',
                     bg: AppColors.green,

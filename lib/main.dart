@@ -6,6 +6,7 @@ import 'screens/queue_waiting_screen.dart';
 import 'screens/youre_next_screen.dart';
 import 'screens/service_complete_screen.dart';
 import 'screens/exit_notification_screen.dart';
+import 'screens/skipped_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/help_screen.dart';
@@ -57,6 +58,7 @@ class QueueFlowApp extends StatelessWidget {
         '/queue/next': (_) => const YoureNextScreen(),
         '/queue/complete': (_) => const ServiceCompleteScreen(),
         '/queue/exit': (_) => const ExitNotificationScreen(),
+        '/queue/skipped': (_) => const SkippedScreen(),
         '/history': (_) => const HistoryScreen(),
         '/profile': (_) => const ProfileScreen(),
         '/help': (_) => HelpScreen(),

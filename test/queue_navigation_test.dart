@@ -21,6 +21,32 @@ void main() {
     expect(routeForBottomNavIndex(0), '/queue/waiting');
   });
 
+  group('the screen for a ticket follows its status', () {
+    QueueSnapshot snapshot(String status, {int position = 0}) => QueueSnapshot(
+          credentials: const QueueCredentials(queueNumber: 7, accessToken: 'ABCD-EFGH'),
+          status: QueueStatus.fromJson({
+            'queue_number': 7,
+            'status': status,
+            'position_in_line': position,
+          }),
+          prediction: QueuePrediction.fromJson(const {}),
+        );
+
+    test('a skipped ticket explains itself instead of staying on the waiting screen', () {
+      expect(routeForQueueSnapshot(snapshot('no_show')), '/queue/skipped');
+    });
+
+    test('a served ticket still goes to the exit screen', () {
+      expect(routeForQueueSnapshot(snapshot('done_pending')), '/queue/exit');
+      expect(routeForQueueSnapshot(snapshot('served')), '/queue/exit');
+    });
+
+    test('a waiting ticket is next at position 1, otherwise waiting', () {
+      expect(routeForQueueSnapshot(snapshot('waiting', position: 1)), '/queue/next');
+      expect(routeForQueueSnapshot(snapshot('waiting', position: 4)), '/queue/waiting');
+    });
+  });
+
   test('Other bottom nav routes stay fixed', () {
     expect(routeForBottomNavIndex(1), '/history');
     expect(routeForBottomNavIndex(2), '/profile');

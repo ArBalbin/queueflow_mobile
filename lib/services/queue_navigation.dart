@@ -22,6 +22,9 @@ const String loginIdleArgument = 'idle';
 
 String routeForQueueSnapshot(QueueSnapshot snapshot) {
   final status = snapshot.status;
+  // Checked first: a skipped ticket is over too, but for a different reason,
+  // and used to fall through to the waiting screen with no explanation.
+  if (status.isNoShow) return '/queue/skipped';
   if (status.isDone) return '/queue/exit';
   if (status.isNext) return '/queue/next';
   return '/queue/waiting';
