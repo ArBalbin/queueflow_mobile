@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../models/payment_models.dart';
 import '../models/queue_models.dart';
 import '../services/queue_api.dart';
 import '../services/queue_navigation.dart';
@@ -176,6 +177,61 @@ class _ServingScreenState extends State<ServingScreen> {
                   ],
                 ),
               ),
+              if (status?.paymentType != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.payments_rounded,
+                        color: AppColors.green,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Have your payment ready',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              status!.paymentAmount != null
+                                  ? '${status.paymentType} · ${formatPeso(status.paymentAmount!)}'
+                                  : status.paymentType!,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.dark,
+                              ),
+                            ),
+                            if (status.paymentNote != null)
+                              Text(
+                                status.paymentNote!,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.dark,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16),
                 AlertBanner(

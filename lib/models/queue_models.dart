@@ -113,6 +113,11 @@ class QueueStatus {
   /// The window this ticket has been called to; null while still waiting.
   final int? counterNumber;
 
+  /// What the student said they are paying, from the join form.
+  final String? paymentType;
+  final double? paymentAmount;
+  final String? paymentNote;
+
   const QueueStatus({
     required this.queueNumber,
     required this.queueLabel,
@@ -126,6 +131,9 @@ class QueueStatus {
     required this.onTheWay,
     required this.onTheWayAt,
     this.counterNumber,
+    this.paymentType,
+    this.paymentAmount,
+    this.paymentNote,
   });
 
   factory QueueStatus.fromJson(Map<String, dynamic> json) {
@@ -155,6 +163,11 @@ class QueueStatus {
       counterNumber: _readInt(json['counter_number']) > 0
           ? _readInt(json['counter_number'])
           : null,
+      paymentType: json['payment_type']?.toString(),
+      paymentAmount: json['payment_amount'] is num
+          ? (json['payment_amount'] as num).toDouble()
+          : null,
+      paymentNote: json['payment_note']?.toString(),
     );
   }
 
@@ -195,6 +208,9 @@ class QueueStatus {
       onTheWay: onTheWay ?? this.onTheWay,
       onTheWayAt: onTheWayAt ?? this.onTheWayAt,
       counterNumber: counterNumber,
+      paymentType: paymentType,
+      paymentAmount: paymentAmount,
+      paymentNote: paymentNote,
     );
   }
 }

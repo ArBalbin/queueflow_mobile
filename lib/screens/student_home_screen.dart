@@ -2,14 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../models/payment_models.dart';
 import '../models/queue_models.dart';
 import '../services/consent_flow.dart';
 import '../services/long_wait.dart';
+import '../services/queue_api.dart';
 import '../services/queue_navigation.dart';
 import '../services/student_api.dart';
 import '../services/queue_session_store.dart';
 import '../services/student_session_store.dart';
 import '../theme/app_theme.dart';
+import '../widgets/join_payment_sheet.dart';
 import '../widgets/now_serving_card.dart';
 import '../widgets/shared_widgets.dart';
 
@@ -127,14 +130,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     }
   }
 
-  Future<void> _setJoined(bool value) async {
+  Future<void> _setJoined(bool value, {JoinPayment? payment}) async {
     final token = StudentSessionStore.sessionToken;
     if (token == null || _joinBusy) return;
 
     setState(() => _joinBusy = true);
     try {
       if (value) {
-        await StudentSessionStore.api.joinQueue(token);
+        await StudentSessionStore.api.joinQueue(token, payment: payment);
       } else {
         await StudentSessionStore.api.cancelJoinQueue(token);
       }
@@ -149,12 +152,28 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       if (!mounted) return;
       setState(() => _joinBusy = false);
       if (await ensureStudentConsent(context)) {
-        await _setJoined(value);
+        await _setJoined(value, payment: payment);
       } else if (mounted) {
         Navigator.of(
           context,
         ).pushNamedAndRemoveUntil('/student/login', (_) => false);
       }
+    } on QueueApiException catch (error) {
+      // The server explains what to fix on the form (422), e.g. "Write which
+      // fees you are paying."; other failures get the general message.
+      if (!mounted) return;
+      setState(() => _joinBusy = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error.statusCode == 422
+                ? error.message
+                : value
+                ? "Couldn't join the queue. Check your connection and try again."
+                : "Couldn't cancel. Try again.",
+          ),
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _joinBusy = false);
@@ -197,7 +216,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       );
       if (join != true || !mounted) return;
     }
-    await _setJoined(true);
+    // What they are paying and the total, for the cashier.
+    final options = await StudentSessionStore.api.fetchPaymentTypes();
+    if (!mounted) return;
+    final payment = await showJoinPaymentSheet(context, options);
+    if (payment == null || !mounted) return;
+    await _setJoined(true, payment: payment);
   }
 
   Future<void> _fetchPrediction() async {

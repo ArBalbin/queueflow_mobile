@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../models/payment_models.dart';
 import '../models/student_models.dart';
 import 'api_config.dart';
 import 'queue_api.dart';
@@ -81,8 +82,22 @@ class StudentApiClient {
   /// Tells the backend this student actually wants a queue number, so the
   /// camera may issue one when it recognizes them. Without this, being seen
   /// by the camera does nothing — recognition alone is not a request to join.
-  Future<void> joinQueue(String sessionToken) async {
-    await _postJson('/api/students/me/join', const {}, sessionToken: sessionToken);
+  Future<void> joinQueue(String sessionToken, {JoinPayment? payment}) async {
+    await _postJson(
+      '/api/students/me/join',
+      payment?.toJson() ?? const {},
+      sessionToken: sessionToken,
+    );
+  }
+
+  /// The payment types the join form offers. Falls back to the default list
+  /// if the server cannot be reached, so the form still opens.
+  Future<PaymentOptions> fetchPaymentTypes() async {
+    try {
+      return PaymentOptions.fromJson(await _getJson('/api/payment_types'));
+    } catch (_) {
+      return PaymentOptions.fallback;
+    }
   }
 
   /// Withdraws that request. Walking past the camera then issues nothing.
