@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- QueuEx green (AppColors.green), behind the logo while the app starts. -->
+    <color name="splash_green">#047857</color>
+</resources>

@@ -88,11 +88,12 @@ class HelpScreen extends StatelessWidget {
               iconBg: AppColors.greenLight,
               iconColor: AppColors.greenDark,
               icon: Icons.access_time_rounded,
-              title: 'Camera-confirmed entry',
+              title: 'Getting a number',
               body:
-                  'Get your ticket from the kiosk, then hold it up to the '
-                  'camera with your face visible. Once both are confirmed, '
-                  'your real kiosk number shows up here automatically.',
+                  '1. Tap Get a Queue Number and fill in what you are paying.\n'
+                  '2. Go to the queue area and look at the camera so it can '
+                  'check your face.\n'
+                  '3. Your number appears in the app. Wait until a window calls it.',
             ),
             const SizedBox(height: 12),
             const _HelpCard(
@@ -108,9 +109,11 @@ class HelpScreen extends StatelessWidget {
               iconBg: AppColors.amberLight,
               iconColor: AppColors.amberBright,
               icon: Icons.timer_rounded,
-              title: 'No-show policy',
+              title: 'If you miss your call',
               body:
-                  'Return before the no-show countdown ends or your number may be skipped.',
+                  'When your number is called, the app shows which window to go to. '
+                  'If you are not there, staff may skip your number; you can then '
+                  'ask for a new one.',
             ),
             const SizedBox(height: 12),
             const _HelpCard(
@@ -119,7 +122,7 @@ class HelpScreen extends StatelessWidget {
               icon: Icons.info_rounded,
               title: 'Need assistance?',
               body:
-                  'Approach any counter staff for help. Show your queue slip if needed.',
+                  'Ask the staff at any cashier window. Show your number in the app, or your printed ticket.',
             ),
           ],
         ),

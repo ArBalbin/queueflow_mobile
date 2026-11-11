@@ -47,7 +47,7 @@ class QueueFlowApp extends StatelessWidget {
       title: 'QueuEx',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      initialRoute: '/student/home',
+      initialRoute: '/',
       routes: {
         '/': (_) => const _BootstrapScreen(),
         '/student/login': (_) => const StudentLoginScreen(),
@@ -80,15 +80,34 @@ class _BootstrapScreen extends StatefulWidget {
   State<_BootstrapScreen> createState() => _BootstrapScreenState();
 }
 
-class _BootstrapScreenState extends State<_BootstrapScreen> {
+class _BootstrapScreenState extends State<_BootstrapScreen>
+    with SingleTickerProviderStateMixin {
+  // Long enough for the logo to register, short enough not to be a wait.
+  static const _minimumShown = Duration(milliseconds: 1200);
+
+  late final AnimationController _intro = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  )..forward();
+
   @override
   void initState() {
     super.initState();
     _decide();
   }
 
+  @override
+  void dispose() {
+    _intro.dispose();
+    super.dispose();
+  }
+
   Future<void> _decide() async {
-    final restored = await StudentSessionStore.restoreSession();
+    final results = await Future.wait([
+      StudentSessionStore.restoreSession(),
+      Future<void>.delayed(_minimumShown),
+    ]);
+    final restored = results.first as bool;
     if (!mounted) return;
 
     // Reopening the app after it sat unused ends the saved session, unless
@@ -134,11 +153,65 @@ class _BootstrapScreenState extends State<_BootstrapScreen> {
     );
   }
 
+  /// The loading screen: the same logo, size and place as Android's start
+  /// screen (res/drawable/launch_background.xml), so the hand-over from
+  /// Android to the app does not jump.
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: AppColors.dark,
-      body: Center(child: CircularProgressIndicator(color: AppColors.white)),
+    final fadeIn = CurvedAnimation(parent: _intro, curve: Curves.easeOut);
+    return Scaffold(
+      backgroundColor: AppColors.green,
+      body: Stack(
+        children: [
+          Center(
+            child: Image.asset(
+              'assets/img/Logo.png',
+              width: 200,
+              semanticLabel: 'QueuEx',
+            ),
+          ),
+          Align(
+            alignment: const Alignment(0, 0.3),
+            child: FadeTransition(
+              opacity: fadeIn,
+              child: const Text(
+                'Your cashier queue, on your phone',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xDDFFFFFF),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 48,
+            child: FadeTransition(
+              opacity: fadeIn,
+              child: const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: AppColors.white,
+                    ),
+                  ),
+                  SizedBox(height: 14),
+                  Text(
+                    'Naga College Foundation',
+                    style: TextStyle(fontSize: 12, color: Color(0x99FFFFFF)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

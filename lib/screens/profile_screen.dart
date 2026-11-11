@@ -28,13 +28,19 @@ class ProfileScreen extends StatelessWidget {
     final displayName = isStudent && studentProfile.fullName?.isNotEmpty == true
         ? studentProfile.fullName!
         : (isStudent ? 'Student' : 'QueuEx Guest');
-    
+
     final displaySubtitle = isStudent
         ? 'ID: ${studentProfile.schoolId}'
         : 'Ticket holder (not signed in)';
 
     final initials = displayName.isNotEmpty
-        ? displayName.trim().split(' ').map((e) => e[0]).take(2).join().toUpperCase()
+        ? displayName
+              .trim()
+              .split(' ')
+              .map((e) => e[0])
+              .take(2)
+              .join()
+              .toUpperCase()
         : 'Q';
 
     return Scaffold(
@@ -74,9 +80,15 @@ class ProfileScreen extends StatelessWidget {
                       children: [
                         IconButton(
                           onPressed: () => goBack(context),
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.white),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          ),
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.white.withValues(alpha: 0.15),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.15,
+                            ),
                             padding: const EdgeInsets.all(10),
                           ),
                         ),
@@ -101,7 +113,10 @@ class ProfileScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: AppColors.white,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              width: 2,
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.15),
@@ -136,7 +151,10 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(6),
@@ -172,7 +190,9 @@ class ProfileScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       color: AppColors.white,
-                      border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                      border: Border.all(
+                        color: AppColors.border.withValues(alpha: 0.5),
+                      ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: const [
                         BoxShadow(
@@ -201,7 +221,10 @@ class ProfileScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Current queue', style: AppText.caption),
+                              const Text(
+                                'Current queue',
+                                style: AppText.caption,
+                              ),
                               const SizedBox(height: 3),
                               Text(
                                 queueLabel,
@@ -234,7 +257,9 @@ class ProfileScreen extends StatelessWidget {
                   Container(
                     decoration: BoxDecoration(
                       color: AppColors.white,
-                      border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                      border: Border.all(
+                        color: AppColors.border.withValues(alpha: 0.5),
+                      ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: const [
                         BoxShadow(
@@ -252,19 +277,34 @@ class ProfileScreen extends StatelessWidget {
                           value: statusLabel,
                           valueColor: AppColors.green,
                         ),
-                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4), indent: 16, endIndent: 16),
+                        Divider(
+                          height: 1,
+                          color: AppColors.border.withValues(alpha: 0.4),
+                          indent: 16,
+                          endIndent: 16,
+                        ),
                         const _SettingRow(
                           icon: Icons.language_rounded,
                           label: 'Language',
                           value: 'English',
                         ),
-                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4), indent: 16, endIndent: 16),
+                        Divider(
+                          height: 1,
+                          color: AppColors.border.withValues(alpha: 0.4),
+                          indent: 16,
+                          endIndent: 16,
+                        ),
                         _SettingRow(
                           icon: Icons.privacy_tip_outlined,
                           label: 'Privacy notice',
                           onTap: () => showPrivacyNotice(context),
                         ),
-                        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4), indent: 16, endIndent: 16),
+                        Divider(
+                          height: 1,
+                          color: AppColors.border.withValues(alpha: 0.4),
+                          indent: 16,
+                          endIndent: 16,
+                        ),
                         if (isStudent) ...[
                           _SettingRow(
                             icon: Icons.delete_forever_outlined,
@@ -274,11 +314,18 @@ class ProfileScreen extends StatelessWidget {
                             showChevron: false,
                             onTap: () => _confirmDeleteAccount(context),
                           ),
-                          Divider(height: 1, color: AppColors.border.withValues(alpha: 0.4), indent: 16, endIndent: 16),
+                          Divider(
+                            height: 1,
+                            color: AppColors.border.withValues(alpha: 0.4),
+                            indent: 16,
+                            endIndent: 16,
+                          ),
                         ],
                         _SettingRow(
-                          icon: isStudent ? Icons.logout_rounded : Icons.clear_all_rounded,
-                          label: isStudent ? 'Log out of my account' : 'Clear active ticket',
+                          icon: isStudent
+                              ? Icons.logout_rounded
+                              : Icons.clear_all_rounded,
+                          label: isStudent ? 'Sign out' : 'Clear active ticket',
                           labelColor: AppColors.red,
                           iconColor: AppColors.red,
                           showChevron: false,
@@ -295,7 +342,10 @@ class ProfileScreen extends StatelessWidget {
                               return;
                             }
                             if (!context.mounted) return;
-                            Navigator.pushReplacementNamed(context, '/ticket/lookup');
+                            Navigator.pushReplacementNamed(
+                              context,
+                              '/ticket/lookup',
+                            );
                           },
                         ),
                       ],
@@ -347,11 +397,19 @@ Future<void> _confirmDeleteAccount(BuildContext context) async {
     QueueSessionStore.clear();
     await StudentSessionStore.deleteAccount();
     if (!context.mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, '/student/login', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/student/login',
+      (route) => false,
+    );
   } catch (_) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Couldn't delete your account. Check your connection and try again.")),
+      const SnackBar(
+        content: Text(
+          "Couldn't delete your account. Check your connection and try again.",
+        ),
+      ),
     );
   }
 }
@@ -379,48 +437,44 @@ class _SettingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 20,
-                color: iconColor ?? AppColors.textMuted,
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(20),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: iconColor ?? AppColors.textMuted),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: labelColor ?? AppColors.dark,
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: labelColor ?? AppColors.dark,
-                  ),
-                ),
-              ),
-              if (value != null) ...[
-                Text(
-                  value!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: valueColor ?? AppColors.textMuted,
-                  ),
-                ),
-              ],
-              if (showChevron) ...[
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 12,
-                  color: AppColors.textLight,
-                ),
-              ],
-            ],
+            ),
           ),
-        ),
-      );
+          if (value != null) ...[
+            Text(
+              value!,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: valueColor ?? AppColors.textMuted,
+              ),
+            ),
+          ],
+          if (showChevron) ...[
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 12,
+              color: AppColors.textLight,
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
 }

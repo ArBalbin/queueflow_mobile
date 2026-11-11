@@ -50,7 +50,7 @@ class NowServingCard extends StatelessWidget {
           if (closed)
             Text(
               'All windows are closed until ${formatClockTime(closedUntil)}. '
-              'You can still join; the line moves once they reopen.',
+              'You can still get a number; the line moves once they reopen.',
               style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.amberText,

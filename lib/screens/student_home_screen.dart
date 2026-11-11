@@ -169,7 +169,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             error.statusCode == 422
                 ? error.message
                 : value
-                ? "Couldn't join the queue. Check your connection and try again."
+                ? "Couldn't request a number. Check your connection and try again."
                 : "Couldn't cancel. Try again.",
           ),
         ),
@@ -181,7 +181,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         SnackBar(
           content: Text(
             value
-                ? "Couldn't join the queue. Check your connection and try again."
+                ? "Couldn't request a number. Check your connection and try again."
                 : "Couldn't cancel. Try again.",
           ),
         ),
@@ -199,8 +199,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         builder: (dialogContext) => AlertDialog(
           title: const Text('The line is long right now'),
           content: Text(
-            'Someone joining now waits ${describeWait(minutes)} before being called. '
-            'Join anyway?',
+            'Someone getting a number now waits ${describeWait(minutes)} before '
+            'being called. Get a number anyway?',
           ),
           actions: [
             TextButton(
@@ -209,7 +209,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Join anyway'),
+              child: const Text('Continue'),
             ),
           ],
         ),
@@ -290,7 +290,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   AlertBanner(
                     text:
                         'The line is long right now: ${describeWait(prediction.newArrivalWaitMinutes)} '
-                        'for someone joining now.',
+                        'for someone getting a number now.',
                     bg: AppColors.amberLight,
                     borderColor: AppColors.amberBright,
                     dotColor: AppColors.amberBright,
@@ -304,6 +304,17 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
               const SectionLabel('YOUR STATUS'),
               const SizedBox(height: 8),
+              // Where the student is in getting a number: the camera's face
+              // check is a step of its own, so it never comes as a surprise.
+              if (faceRegistered) ...[
+                _JoinSteps(
+                  current:
+                      _joined || _pendingLink || _queueState == 'identifying'
+                      ? 2
+                      : 1,
+                ),
+                const SizedBox(height: 10),
+              ],
               if (!faceRegistered)
                 _StatusCard(
                   icon: Icons.face_retouching_natural_rounded,
@@ -326,13 +337,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   icon: Icons.person_search_rounded,
                   iconBg: AppColors.greenLight,
                   iconColor: AppColors.green,
-                  title: 'The camera recognized you',
+                  title: 'The camera saw you',
                   message:
-                      'You had not joined the queue yet when the camera saw you, so no '
-                      'number was issued. Tap below to join, then stay in view for a '
-                      'few seconds.',
+                      "You haven't asked for a number yet, so none was given. Tap "
+                      'below, fill in your payment, then stay in view of the camera.',
                   action: PrimaryButton(
-                    label: _joinBusy ? 'Joining…' : 'Join the Queue',
+                    label: _joinBusy ? 'Requesting…' : 'Get a Queue Number',
                     bg: AppColors.green,
                     onTap: _joinBusy ? null : _joinWithWaitCheck,
                   ),
@@ -345,10 +355,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   title: 'Your number was skipped',
                   message:
                       'Staff marked you as not present when your number was called. '
-                      'Step away from the camera for a few seconds, then join again '
-                      'to get a new number.',
+                      "To get a new one, step out of the camera's view for a few "
+                      'seconds, then ask again.',
                   action: PrimaryButton(
-                    label: _joinBusy ? 'Joining…' : 'Join the Queue',
+                    label: _joinBusy ? 'Requesting…' : 'Get a Queue Number',
                     bg: AppColors.green,
                     onTap: _joinBusy ? null : _joinWithWaitCheck,
                   ),
@@ -358,12 +368,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   icon: Icons.task_alt_rounded,
                   iconBg: AppColors.greenLight,
                   iconColor: AppColors.green,
-                  title: 'You were just served',
+                  title: "You're done",
                   message:
-                      'Step away from the camera for a few seconds before joining again. '
-                      'Your previous entry is still clearing.',
+                      "To get another number, step out of the camera's view for a few "
+                      'seconds, then ask again.',
                   action: PrimaryButton(
-                    label: _joinBusy ? 'Joining…' : 'Join again',
+                    label: _joinBusy ? 'Requesting…' : 'Get Another Number',
                     outlined: true,
                     borderColor: AppColors.borderMid,
                     fg: AppColors.dark,
@@ -375,10 +385,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   icon: Icons.sync_rounded,
                   iconBg: AppColors.greenLight,
                   iconColor: AppColors.green,
-                  title: 'Confirming your identity',
+                  title: 'Checking your face…',
                   message:
-                      'The camera can see someone in the queue area and is working out '
-                      'who it is. Face the camera straight on and stay still.',
+                      'The camera sees someone in the queue area and is checking who it '
+                      'is. Look straight at the camera and stay still for a moment.',
                   action: Row(
                     children: [
                       const SizedBox(
@@ -399,15 +409,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   icon: Icons.check_circle_rounded,
                   iconBg: AppColors.greenLight,
                   iconColor: AppColors.green,
-                  title: "You're in the queue",
+                  title: 'Next: face check at the camera',
                   message:
-                      'Walk up to the queue-area camera — it will recognize you and issue '
-                      'your number automatically. This screen opens your live status the '
-                      'moment it does.',
+                      'Go to the queue area and look at the camera for a few seconds. '
+                      'Your number appears here as soon as it recognizes you.',
                   action: PrimaryButton(
-                    label: _joinBusy
-                        ? 'Cancelling…'
-                        : "Cancel — I'm not queueing",
+                    label: _joinBusy ? 'Cancelling…' : 'Cancel My Request',
                     outlined: true,
                     borderColor: AppColors.borderMid,
                     fg: AppColors.dark,
@@ -419,12 +426,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   icon: Icons.qr_code_scanner_rounded,
                   iconBg: AppColors.greenLight,
                   iconColor: AppColors.green,
-                  title: 'Ready to join the queue?',
+                  title: 'Get a queue number',
                   message:
-                      'The camera will not give you a number until you join. Tap below '
-                      'when you actually want to queue, then walk up to the camera.',
+                      "Tell us what you're paying, then look at the camera in the queue "
+                      'area. It checks your face and gives you a number.',
                   action: PrimaryButton(
-                    label: _joinBusy ? 'Joining…' : 'Join the Queue',
+                    label: _joinBusy ? 'Requesting…' : 'Get a Queue Number',
                     bg: AppColors.green,
                     onTap: _joinBusy ? null : _joinWithWaitCheck,
                   ),
@@ -437,10 +444,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 children: [
                   const _ActionRow(
                     icon: Icons.visibility_outlined,
-                    title: 'Join, then go to the queue area',
+                    title: 'How to get a number',
                     subtitle:
-                        'Tap "Join the Queue" first, then stand where the camera can see '
-                        'your face. It only issues a number to students who have joined.',
+                        'Tap "Get a Queue Number" and fill in your payment, then look at '
+                        'the camera in the queue area. It only gives numbers to students '
+                        'who asked for one.',
                   ),
                   const Divider(height: 1, color: AppColors.border),
                   _ActionRow(
@@ -461,7 +469,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   child: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Text(
-                      'Log Out',
+                      'Sign Out',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -575,11 +583,11 @@ class _StatsCard extends StatelessWidget {
           ),
           const _StatDivider(),
           Expanded(
-            child: _StatColumn(value: wait, label: 'Wait now'),
+            child: _StatColumn(value: wait, label: 'Est. wait'),
           ),
           const _StatDivider(),
           Expanded(
-            child: _StatColumn(value: counters, label: 'Counters'),
+            child: _StatColumn(value: counters, label: 'Windows open'),
           ),
         ],
       ),
@@ -760,6 +768,84 @@ class _ActionRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Request -> Face check -> Your number, with the current step highlighted.
+class _JoinSteps extends StatelessWidget {
+  final int current;
+  const _JoinSteps({required this.current});
+
+  static const _labels = ['Request', 'Face check', 'Your number'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < _labels.length; i++)
+            Expanded(child: _step(i + 1, _labels[i])),
+        ],
+      ),
+    );
+  }
+
+  Widget _step(int number, String label) {
+    final done = number < current;
+    final active = number == current;
+    final color = done || active ? AppColors.green : AppColors.textLight;
+    return Semantics(
+      label:
+          'Step $number, $label${done
+              ? ', done'
+              : active
+              ? ', current'
+              : ''}',
+      child: Column(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: active ? AppColors.green : AppColors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: color, width: 2),
+            ),
+            child: done
+                ? const Icon(
+                    Icons.check_rounded,
+                    size: 16,
+                    color: AppColors.green,
+                  )
+                : Text(
+                    '$number',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: active ? AppColors.white : AppColors.textLight,
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              color: active ? AppColors.dark : AppColors.textMuted,
+            ),
+          ),
+        ],
       ),
     );
   }

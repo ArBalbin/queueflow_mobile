@@ -65,9 +65,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
       // privacy notice comes first; no account is created without consent.
       if (!mounted) return;
       setState(() => _isLoading = false);
-      final agreed = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => const ConsentScreen()),
-      );
+      final agreed = await Navigator.of(
+        context,
+      ).push<bool>(MaterialPageRoute(builder: (_) => const ConsentScreen()));
       if (agreed != true) {
         _showError(kConsentDeclinedMessage);
         return;
@@ -208,7 +208,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 const Text(
-                                  'Sign in to join the queue and track your place from your phone.',
+                                  'Sign in to get a queue number and track your place from your phone.',
                                   textAlign: TextAlign.center,
                                   style: AppText.bodyMuted,
                                 ),
@@ -231,7 +231,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                         )
                       else ...[
                         PrimaryButton(
-                          label: 'Log in with Face',
+                          label: 'Sign in with Face',
                           bg: AppColors.green,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           fontSize: 15,
@@ -261,7 +261,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                           ),
                           child: const Text(
                             'You were signed out because QueuEx was not used '
-                            'for 30 minutes. Log in again to continue.',
+                            'for 30 minutes. Sign in again to continue.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12,
@@ -280,7 +280,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                             borderRadius: BorderRadius.circular(9),
                           ),
                           child: const Text(
-                            'Registration complete. Log in with your face to '
+                            'Registration complete. Sign in with your face to '
                             'confirm it recognises you, or sign in with Gbox.',
                             textAlign: TextAlign.center,
                             style: TextStyle(

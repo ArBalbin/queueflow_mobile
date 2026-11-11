@@ -84,12 +84,19 @@ class _SkippedScreenState extends State<SkippedScreen> {
                 'Staff marked you as not present when your number was called, '
                 'so the line moved on.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.45),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textMuted,
+                  height: 1.45,
+                ),
               ),
               const SizedBox(height: 20),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -110,9 +117,13 @@ class _SkippedScreenState extends State<SkippedScreen> {
                     Text(
                       loggedIn
                           ? 'Still need the cashier? Step away from the camera for a few '
-                              'seconds, then tap Join the Queue to get a new number.'
+                                'seconds, then tap Get a Queue Number to get a new one.'
                           : 'Still need the cashier? Take a new ticket at the kiosk.',
-                      style: const TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.4),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 
 class QBadge extends StatelessWidget {
@@ -143,7 +144,9 @@ class QueueListItem extends StatelessWidget {
   );
 }
 
-class PrimaryButton extends StatelessWidget {
+/// The app's main button: it presses in a little and gives a light tap of
+/// feedback, as buttons do in most phone apps. Disabled (onTap null) it fades.
+class PrimaryButton extends StatefulWidget {
   final String label;
   final VoidCallback? onTap;
   final Color? bg;
@@ -163,33 +166,103 @@ class PrimaryButton extends StatelessWidget {
     this.padding,
     this.fontSize,
   });
+
+  @override
+  State<PrimaryButton> createState() => _PrimaryButtonState();
+}
+
+class _PrimaryButtonState extends State<PrimaryButton> {
+  bool _down = false;
+
+  void _setDown(bool value) {
+    if (widget.onTap == null || _down == value) return;
+    setState(() => _down = value);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bgColor = bg ?? (outlined ? Colors.transparent : AppColors.dark);
-    final fgColor = fg ?? (outlined ? AppColors.dark : AppColors.white);
+    final enabled = widget.onTap != null;
+    final bgColor = widget.bg ?? (widget.outlined ? Colors.transparent : AppColors.dark);
+    final fgColor = widget.fg ?? (widget.outlined ? AppColors.dark : AppColors.white);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: padding ?? const EdgeInsets.symmetric(vertical: 11),
-        decoration: BoxDecoration(
-          color: bgColor,
-          border: outlined
-              ? Border.all(color: borderColor ?? AppColors.dark, width: 1.5)
-              : null,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: fontSize ?? 12,
-            fontWeight: FontWeight.w600,
-            color: fgColor,
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      child: GestureDetector(
+        onTapDown: (_) => _setDown(true),
+        onTapUp: (_) => _setDown(false),
+        onTapCancel: () => _setDown(false),
+        onTap: enabled
+            ? () {
+                HapticFeedback.lightImpact();
+                widget.onTap!();
+              }
+            : null,
+        child: AnimatedScale(
+          scale: _down ? 0.97 : 1,
+          duration: const Duration(milliseconds: 110),
+          curve: Curves.easeOut,
+          child: AnimatedOpacity(
+            opacity: enabled ? 1 : 0.55,
+            duration: const Duration(milliseconds: 160),
+            child: Container(
+              width: double.infinity,
+              padding: widget.padding ?? const EdgeInsets.symmetric(vertical: 13),
+              decoration: BoxDecoration(
+                color: bgColor,
+                border: widget.outlined
+                    ? Border.all(color: widget.borderColor ?? AppColors.dark, width: 1.5)
+                    : null,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: widget.outlined || !enabled
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: bgColor.withValues(alpha: 0.28),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                widget.label,
+                style: TextStyle(
+                  fontSize: widget.fontSize ?? 13,
+                  fontWeight: FontWeight.w600,
+                  color: fgColor,
+                ),
+              ),
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A number or short value that changes with a quick fade and slide instead
+/// of jumping, e.g. people ahead counting down.
+class AnimatedValueText extends StatelessWidget {
+  final String value;
+  final TextStyle? style;
+  final TextAlign? textAlign;
+  const AnimatedValueText(this.value, {super.key, this.style, this.textAlign});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 260),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween(begin: const Offset(0, 0.25), end: Offset.zero).animate(animation),
+          child: child,
+        ),
+      ),
+      child: Text(value, key: ValueKey(value), style: style, textAlign: textAlign),
     );
   }
 }
@@ -381,8 +454,13 @@ class QBottomNavBar extends StatelessWidget {
             return Expanded(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () => onTap(i),
-                child: Container(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onTap(i);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   decoration: BoxDecoration(
                     color: active ? Colors.white : Colors.transparent,
@@ -403,7 +481,7 @@ class QBottomNavBar extends StatelessWidget {
                       Text(
                         labels[i],
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: active ? AppColors.green : Colors.white,
                         ),

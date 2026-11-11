@@ -41,7 +41,7 @@ class ExitNotificationScreen extends StatelessWidget {
                     bg: AppColors.dark,
                     numColor: const Color(0xFF9FE1CB),
                     badge: const QBadge(
-                      label: 'Ended',
+                      label: 'Done',
                       bg: AppColors.amberLight,
                       fg: AppColors.amberText,
                     ),
@@ -49,11 +49,17 @@ class ExitNotificationScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: const [
-                      Expanded(child: StatTile(value: '0', label: 'Ahead')),
+                      Expanded(
+                        child: StatTile(value: '0', label: 'Ahead'),
+                      ),
                       SizedBox(width: 8),
-                      Expanded(child: StatTile(value: '0', label: 'Est. min')),
+                      Expanded(
+                        child: StatTile(value: '0', label: 'Est. min'),
+                      ),
                       SizedBox(width: 8),
-                      Expanded(child: StatTile(value: '-', label: 'Counters')),
+                      Expanded(
+                        child: StatTile(value: '-', label: 'Windows'),
+                      ),
                     ],
                   ),
                 ],
@@ -112,7 +118,7 @@ class ExitNotificationScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Your session has ended',
+                    "You're done",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -121,7 +127,7 @@ class ExitNotificationScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Your transaction is complete. Kindly vacate the queue area to allow the next person to be served.',
+                    'Your transaction is complete. Please leave the window so the next person can be served.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,

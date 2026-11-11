@@ -99,7 +99,7 @@ class _YoureNextScreenState extends State<YoureNextScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Unable to notify staff. Please try again.';
+        _errorMessage = 'Could not reach the cashier. Please try again.';
         _isSendingOnWay = false;
       });
     }
@@ -290,7 +290,7 @@ class _NextBody extends StatelessWidget {
                                     value: snapshot.activeCounters > 0
                                         ? '${snapshot.activeCounters}'
                                         : '-',
-                                    label: 'Counters open',
+                                    label: 'Windows open',
                                   ),
                                 ),
                               ],
@@ -377,7 +377,7 @@ class _NextBody extends StatelessWidget {
                               const SizedBox(height: 16),
                               _TimelineStep(
                                 icon: Icons.check_rounded,
-                                label: 'Joined the queue',
+                                label: 'Got your number',
                                 time: status.joinedAt,
                                 done: true,
                               ),
@@ -386,8 +386,8 @@ class _NextBody extends StatelessWidget {
                                     ? Icons.check_rounded
                                     : Icons.directions_walk_rounded,
                                 label: hasNotifiedStaff
-                                    ? 'Notified staff you are on your way'
-                                    : 'Notify staff when you head over',
+                                    ? 'Told the cashier you are coming'
+                                    : "Tell the cashier you're coming",
                                 time: hasNotifiedStaff
                                     ? status.onTheWayAt
                                     : null,
@@ -528,7 +528,7 @@ class _StatChip extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: AppColors.green),
           const SizedBox(height: 4),
-          Text(
+          AnimatedValueText(
             value,
             style: const TextStyle(
               fontSize: 13,
@@ -717,9 +717,9 @@ class _BottomActionBar extends StatelessWidget {
           Expanded(
             child: PrimaryButton(
               label: hasNotifiedStaff
-                  ? 'Staff Notified'
+                  ? 'Cashier Notified'
                   : isSendingOnWay
-                  ? 'Notifying Staff...'
+                  ? 'Telling the Cashier…'
                   : "I'm on my way",
               bg: AppColors.green,
               padding: const EdgeInsets.symmetric(vertical: 16),

@@ -306,7 +306,7 @@ class _WaitingBody extends StatelessWidget {
                                       value: snapshot.activeCounters > 0
                                           ? '${snapshot.activeCounters}'
                                           : '-',
-                                      label: 'Counters open',
+                                      label: 'Windows open',
                                     ),
                                   ),
                                 ],
@@ -475,7 +475,7 @@ class _StatColumn extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
+        AnimatedValueText(
           value,
           style: const TextStyle(
             fontSize: 16,

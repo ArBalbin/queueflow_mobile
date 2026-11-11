@@ -28,7 +28,7 @@ const List<NoticeSection> kNoticeSections = [
   NoticeSection(
     'Why we collect it',
     'To recognise you at the cashier\'s queue area, so that a queue number is '
-        'issued only to you and only after you tap "Join the Queue", and to show '
+        'issued only to you and only after you tap "Get a Queue Number", and to show '
         'you your position and estimated wait.',
   ),
   NoticeSection(

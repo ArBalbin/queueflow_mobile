@@ -119,7 +119,7 @@ class ServiceCompleteScreen extends StatelessWidget {
                     ),
                     _SummaryRow(
                       icon: Icons.storefront_rounded,
-                      label: 'Counter',
+                      label: 'Window',
                       value: 'Assigned by staff',
                       isLast: true,
                     ),

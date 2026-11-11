@@ -17,10 +17,25 @@ void main() {
 
     // Both sign-in paths, the separate sign-up route, and the guest path for
     // a printed kiosk ticket are all offered.
-    expect(find.text('Log in with Face'), findsOneWidget);
+    expect(find.text('Sign in with Face'), findsOneWidget);
     expect(find.text('Sign in with Gbox'), findsOneWidget);
     expect(find.text('New here?'), findsOneWidget);
     expect(find.text('Create an account'), findsOneWidget);
+  });
+
+  testWidgets('opens on the QueuEx loading screen first', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(const {});
+
+    await tester.pumpWidget(const QueueFlowApp());
+    await tester.pump();
+    expect(find.bySemanticsLabel('QueuEx'), findsOneWidget);
+    expect(find.text('Your cashier queue, on your phone'), findsOneWidget);
+    expect(find.text('Sign in with Face'), findsNothing, reason: 'not before the check finishes');
+
+    await tester.pumpAndSettle();
+    expect(find.text('Sign in with Face'), findsOneWidget);
   });
 
   test('connects to the deployed backend, not localhost, by default', () {
