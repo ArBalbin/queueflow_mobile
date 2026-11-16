@@ -21,6 +21,22 @@ class StudentSessionStore {
 
   static const _tokenKey = 'student_session_token';
 
+  // The student whose account was last used on this phone, and whether that
+  // account has a registered face. Kept when the student signs out, so they
+  // can sign back in with their face; dropped when the account is deleted.
+  // Face sign-in can open only this account: matching a face against every
+  // student and opening whichever came out on top let a student whose own
+  // face was not registered land in a classmate's account during the UAT.
+  static const _lastStudentKey = 'last_student_id';
+  static const _lastHasFaceKey = 'last_student_has_face';
+
+  /// Shown when face sign-in is not possible on this phone.
+  static const String faceSignInNeedsAccountMessage =
+      'Face sign-in works only for the account last used on this phone. '
+      'Sign in with Gbox first.';
+  static const String faceNotRegisteredMessage =
+      "Your face isn't registered yet. Sign in with Gbox, then register your face.";
+
   static String? _sessionToken;
   static StudentProfile? profile;
 
@@ -37,6 +53,7 @@ class StudentSessionStore {
     try {
       profile = await api.getMe(saved);
       _sessionToken = saved;
+      await _rememberStudent(profile!);
       return true;
     } catch (_) {
       await prefs.remove(_tokenKey);
@@ -49,8 +66,45 @@ class StudentSessionStore {
     await prefs.setString(_tokenKey, session.sessionToken);
     _sessionToken = session.sessionToken;
     profile = session.profile;
+    await _rememberStudent(session.profile);
     // A fresh sign-in starts the idle clock again.
     await IdleLogout.markActive();
+  }
+
+  static Future<void> _rememberStudent(StudentProfile p) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_lastStudentKey, p.studentId);
+      await prefs.setBool(_lastHasFaceKey, p.hasFaceEmbedding);
+    } catch (_) {
+      // Face sign-in then asks for Gbox once more; nothing else depends on it.
+    }
+  }
+
+  static Future<void> _forgetStudent() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_lastStudentKey);
+      await prefs.remove(_lastHasFaceKey);
+    } catch (_) {}
+  }
+
+  /// The account face sign-in may open on this phone, or null with the
+  /// reason it is not available.
+  static Future<({int? studentId, String? reason})> faceSignInAccount() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final id = prefs.getInt(_lastStudentKey);
+      if (id == null) {
+        return (studentId: null, reason: faceSignInNeedsAccountMessage);
+      }
+      if (prefs.getBool(_lastHasFaceKey) != true) {
+        return (studentId: null, reason: faceNotRegisteredMessage);
+      }
+      return (studentId: id, reason: null);
+    } catch (_) {
+      return (studentId: null, reason: faceSignInNeedsAccountMessage);
+    }
   }
 
   /// Opens the Google account picker and returns the ID token. Returns null
@@ -118,11 +172,19 @@ class StudentSessionStore {
     }
     await api.deleteAccount(token);
     _sessionToken = null; // the server session is already gone
+    await _forgetStudent();
     await logout();
   }
 
+  /// Signs in the account last used on this phone, if [photo] shows its
+  /// owner. Throws QueueApiException with the reason otherwise.
   static Future<StudentSession> signInWithFace(File photo) async {
-    final session = await api.faceLogin(photo);
+    final account = await faceSignInAccount();
+    final id = account.studentId;
+    if (id == null) {
+      throw QueueApiException(account.reason ?? faceSignInNeedsAccountMessage);
+    }
+    final session = await api.faceLogin(photo, expectedStudentId: id);
     await _persist(session);
     return session;
   }
@@ -133,7 +195,9 @@ class StudentSessionStore {
       throw const QueueApiException('Not logged in.');
     }
     await api.registerFace(photos, token);
-    profile = await api.getMe(token);
+    final me = await api.getMe(token);
+    profile = me;
+    await _rememberStudent(me);
   }
 
   /// Signs the student out. Deliberately cannot throw: logging out must

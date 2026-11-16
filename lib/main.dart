@@ -20,6 +20,7 @@ import 'services/idle_logout.dart';
 import 'services/queue_navigation.dart';
 import 'services/queue_session_store.dart';
 import 'services/student_session_store.dart';
+import 'services/turn_notice.dart';
 
 /// Lets the idle sign-out return to the login screen from wherever the
 /// student is when the app is reopened.
@@ -28,6 +29,7 @@ final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   IdleLogout(appNavigatorKey).start();
+  TurnNotifier.init();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Color(0xFF1A1A2E),

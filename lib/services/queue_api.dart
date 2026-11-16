@@ -33,6 +33,20 @@ class QueueApiException implements Exception {
   String toString() => message;
 }
 
+/// What a student is told when a request gets no answer. The old messages
+/// named the server address and said to check "the backend", which means
+/// nothing to a student: in the UAT, one who had simply not registered a face
+/// read "Cannot connect" and gave up.
+const String kServerSlowMessage =
+    'QueuEx is taking too long to answer. The server may be busy or your '
+    'internet slow. Please wait a moment and try again.';
+const String kServerUnreachableMessage =
+    "Can't reach QueuEx. Check your internet connection and try again.";
+
+/// The message for a request that failed without an answer from the server.
+String networkErrorMessage(Object error) =>
+    error is TimeoutException ? kServerSlowMessage : kServerUnreachableMessage;
+
 class QueueApiClient {
   final http.Client _client;
   final String baseUrl;
@@ -173,7 +187,6 @@ class QueueApiClient {
   }
 
   Future<Map<String, dynamic>> _getJson(Uri uri) async {
-    final requestBaseUrl = _baseUrlFromUri(uri) ?? baseUrl;
     try {
       final response = await _client
           .get(uri)
@@ -182,19 +195,13 @@ class QueueApiClient {
     } on QueueApiException {
       rethrow;
     } on TimeoutException {
-      throw QueueApiException(
-        'QueuEx API timed out. Make sure the backend is running at $requestBaseUrl.',
-      );
+      throw const QueueApiException(kServerSlowMessage);
     } on http.ClientException {
-      throw QueueApiException(
-        'Cannot connect to QueuEx API at $requestBaseUrl.',
-      );
+      throw const QueueApiException(kServerUnreachableMessage);
     } catch (e, st) {
       debugPrint('[QueuEx DEBUG] $uri failed: ${e.runtimeType}: $e');
       debugPrint('[QueuEx DEBUG] stack: $st');
-      throw QueueApiException(
-        'Cannot reach QueuEx API. Check your backend server and network.',
-      );
+      throw const QueueApiException(kServerUnreachableMessage);
     }
   }
 
@@ -202,7 +209,6 @@ class QueueApiClient {
     Uri uri,
     Map<String, dynamic> body,
   ) async {
-    final requestBaseUrl = _baseUrlFromUri(uri) ?? baseUrl;
     try {
       final response = await _client
           .post(
@@ -215,19 +221,13 @@ class QueueApiClient {
     } on QueueApiException {
       rethrow;
     } on TimeoutException {
-      throw QueueApiException(
-        'QueuEx API timed out. Make sure the backend is running at $requestBaseUrl.',
-      );
+      throw const QueueApiException(kServerSlowMessage);
     } on http.ClientException {
-      throw QueueApiException(
-        'Cannot connect to QueuEx API at $requestBaseUrl.',
-      );
+      throw const QueueApiException(kServerUnreachableMessage);
     } catch (e, st) {
       debugPrint('[QueuEx DEBUG] $uri failed: ${e.runtimeType}: $e');
       debugPrint('[QueuEx DEBUG] stack: $st');
-      throw QueueApiException(
-        'Cannot reach QueuEx API. Check your backend server and network.',
-      );
+      throw const QueueApiException(kServerUnreachableMessage);
     }
   }
 

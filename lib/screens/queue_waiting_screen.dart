@@ -7,6 +7,7 @@ import '../services/long_wait.dart';
 import '../services/queue_api.dart';
 import '../services/queue_navigation.dart';
 import '../services/queue_session_store.dart';
+import '../services/turn_notice.dart';
 import '../theme/app_theme.dart';
 import '../widgets/now_serving_card.dart';
 import '../widgets/shared_widgets.dart';
@@ -29,6 +30,8 @@ class _QueueWaitingScreenState extends State<QueueWaitingScreen> {
     super.initState();
     _refresh(showSpinner: _snapshot == null);
     _pollTimer = Timer.periodic(const Duration(seconds: 6), (_) => _refresh());
+    // So the "your turn is near" heads-up can reach a phone in a pocket.
+    TurnNotifier.requestPermission();
   }
 
   @override
@@ -68,6 +71,42 @@ class _QueueWaitingScreenState extends State<QueueWaitingScreen> {
     );
   }
 
+  /// Once per ticket, when the estimate drops to five minutes or less: a
+  /// phone notification, a buzz, and a message on screen.
+  void _headsUpIfTurnSoon(QueueSnapshot snapshot) {
+    final status = snapshot.status;
+    final minutes = status.prediction?.estimatedWaitMinutes;
+    if (!TurnSoonNotice.shouldShow(
+      status.queueNumber,
+      minutes,
+      status.positionInLine,
+    )) {
+      return;
+    }
+    TurnSoonNotice.markShown(status.queueNumber);
+    final ahead = status.positionInLine - 1;
+    final when = minutes! < 1 ? 'in less than a minute' : 'in ${describeWait(minutes)}';
+    final message =
+        '${status.queueLabel} should be called $when '
+        '($ahead ${ahead == 1 ? 'person' : 'people'} ahead of you). '
+        'Head back to the cashier queue area now.';
+    TurnNotifier.showOnce('soon-${status.queueNumber}', 'Your turn is near', message);
+    HapticFeedback.heavyImpact();
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Your turn is near'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _refresh({bool showSpinner = false}) async {
     if (_isRefreshing || !QueueSessionStore.hasSession) return;
     if (showSpinner && mounted) {
@@ -81,6 +120,15 @@ class _QueueWaitingScreenState extends State<QueueWaitingScreen> {
       if (!mounted) return;
       final route = routeForQueueSnapshot(snapshot);
       if (route != '/queue/waiting') {
+        if (route == '/queue/next') {
+          // The screen changes too, but a phone in a pocket shows nothing.
+          TurnNotifier.showOnce(
+            'next-${snapshot.status.queueNumber}',
+            "You're next",
+            '${snapshot.status.queueLabel} is first in line. '
+                'Stay at the cashier queue area.',
+          );
+        }
         Navigator.pushReplacementNamed(context, route);
         return;
       }
@@ -90,6 +138,7 @@ class _QueueWaitingScreenState extends State<QueueWaitingScreen> {
         _isRefreshing = false;
       });
       _warnIfLongWait(snapshot);
+      _headsUpIfTurnSoon(snapshot);
     } on QueueApiException catch (error) {
       if (!mounted) return;
       if (error.statusCode == 404 && _snapshot != null) {

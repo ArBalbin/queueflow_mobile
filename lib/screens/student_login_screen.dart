@@ -88,6 +88,15 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   }
 
   Future<void> _handleFaceLogin() async {
+    // Say at once if face sign-in cannot work on this phone (no account used
+    // here yet, or no face registered), instead of taking a photo and then
+    // failing after a slow upload.
+    final account = await StudentSessionStore.faceSignInAccount();
+    if (account.studentId == null) {
+      _showError(account.reason ?? StudentSessionStore.faceSignInNeedsAccountMessage);
+      return;
+    }
+    if (!mounted) return;
     final photo = await Navigator.of(
       context,
     ).push<File>(MaterialPageRoute(builder: (_) => const FaceScanScreen()));

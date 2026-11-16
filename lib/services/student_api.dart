@@ -58,11 +58,14 @@ class StudentApiClient {
     await _deleteJson('/api/students/me', sessionToken: sessionToken);
   }
 
-  Future<StudentSession> faceLogin(File photo) async {
+  /// Signs in with a face. The backend accepts it only if the face belongs
+  /// to [expectedStudentId], the account last used on this phone.
+  Future<StudentSession> faceLogin(File photo, {required int expectedStudentId}) async {
     final response = await _postMultipart(
       '/api/students/auth/face',
       fileField: 'photo',
       files: [photo],
+      fields: {'expected_student_id': '$expectedStudentId'},
     );
     return StudentSession.fromJson(response);
   }
@@ -142,7 +145,7 @@ class StudentApiClient {
     } catch (e, st) {
       debugPrint('[QueuEx DEBUG] GET $uri failed: ${e.runtimeType}: $e');
       debugPrint('[QueuEx DEBUG] stack: $st');
-      throw QueueApiException('Cannot reach QueuEx API at $baseUrl.');
+      throw QueueApiException(networkErrorMessage(e));
     }
   }
 
@@ -173,7 +176,7 @@ class StudentApiClient {
     } catch (e, st) {
       debugPrint('[QueuEx DEBUG] POST $uri failed: ${e.runtimeType}: $e');
       debugPrint('[QueuEx DEBUG] stack: $st');
-      throw QueueApiException('Cannot reach QueuEx API at $baseUrl.');
+      throw QueueApiException(networkErrorMessage(e));
     }
   }
 
@@ -196,7 +199,7 @@ class StudentApiClient {
     } catch (e, st) {
       debugPrint('[QueuEx DEBUG] DELETE $uri failed: ${e.runtimeType}: $e');
       debugPrint('[QueuEx DEBUG] stack: $st');
-      throw QueueApiException('Cannot reach QueuEx API at $baseUrl.');
+      throw QueueApiException(networkErrorMessage(e));
     }
   }
 
@@ -204,12 +207,14 @@ class StudentApiClient {
     String path, {
     required String fileField,
     required List<File> files,
+    Map<String, String> fields = const {},
     String? sessionToken,
   }) async {
     final uri = Uri.parse('$baseUrl$path');
     try {
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_headers(sessionToken));
+      request.fields.addAll(fields);
       for (final file in files) {
         request.files.add(
           await http.MultipartFile.fromPath(fileField, file.path),
@@ -227,7 +232,7 @@ class StudentApiClient {
     } catch (e, st) {
       debugPrint('[QueuEx DEBUG] MULTIPART $uri failed: ${e.runtimeType}: $e');
       debugPrint('[QueuEx DEBUG] stack: $st');
-      throw QueueApiException('Cannot reach QueuEx API at $baseUrl.');
+      throw QueueApiException(networkErrorMessage(e));
     }
   }
 
