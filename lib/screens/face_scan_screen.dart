@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../services/camera_ml_kit.dart';
 import '../theme/app_theme.dart';
+import '../widgets/face_scan_widgets.dart';
 
 class FaceScanScreen extends StatefulWidget {
   const FaceScanScreen({super.key});
@@ -144,7 +145,10 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
       shot = await ImagePicker().pickImage(
         source: ImageSource.camera,
         preferredCameraDevice: CameraDevice.front,
-        imageQuality: 90,
+        // Smaller than a full-size phone photo, so it uploads quickly.
+        imageQuality: 85,
+        maxWidth: 1080,
+        maxHeight: 1080,
       );
     } catch (e) {
       if (!mounted) return;
@@ -195,6 +199,10 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
                 ],
               ),
             ),
+            FaceScanPrompt(
+              text: _status,
+              good: _status == 'Hold still…' || _status == 'Captured!',
+            ),
             Expanded(
               child: Center(
                 child: Container(
@@ -234,29 +242,17 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-              child: Column(
-                children: [
-                  Text(
-                    _status,
-                    style: const TextStyle(
-                      color: Color.fromARGB(255, 7, 7, 7),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+              child: GestureDetector(
+                onTap: _useManualCamera,
+                child: const Text(
+                  'Trouble scanning? Take a photo manually',
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 0, 41, 28),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    decoration: TextDecoration.underline,
                   ),
-                  const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: _useManualCamera,
-                    child: const Text(
-                      'Trouble scanning? Take a photo manually',
-                      style: TextStyle(
-                        color: Color.fromARGB(255, 0, 41, 28),
-                        fontSize: 12,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ],

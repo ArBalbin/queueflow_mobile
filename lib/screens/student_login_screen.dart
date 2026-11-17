@@ -24,10 +24,14 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  /// Said under the spinner, so a slow sign-in does not look stuck.
+  String? _loadingMessage;
+
   Future<void> _handleGoogleSignIn() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _loadingMessage = null;
     });
 
     try {
@@ -105,6 +109,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _loadingMessage = 'Checking your face… this can take a few seconds.';
     });
 
     try {
@@ -143,6 +148,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     if (!mounted) return;
     setState(() {
       _isLoading = false;
+      _loadingMessage = null;
       _errorMessage = message;
     });
   }
@@ -229,13 +235,29 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                       const SizedBox(height: 20),
 
                       if (_isLoading)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.green,
-                            ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Column(
+                            children: [
+                              const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  color: AppColors.green,
+                                ),
+                              ),
+                              if (_loadingMessage != null) ...[
+                                const SizedBox(height: 12),
+                                Text(
+                                  _loadingMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: AppColors.dark,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         )
                       else ...[

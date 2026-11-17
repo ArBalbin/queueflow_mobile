@@ -189,12 +189,15 @@ class StudentSessionStore {
     return session;
   }
 
-  static Future<void> registerFace(List<File> photos) async {
+  static Future<void> registerFace(
+    List<File> photos, {
+    void Function(double sent)? onProgress,
+  }) async {
     final token = _sessionToken;
     if (token == null) {
       throw const QueueApiException('Not logged in.');
     }
-    await api.registerFace(photos, token);
+    await api.registerFace(photos, token, onProgress: onProgress);
     final me = await api.getMe(token);
     profile = me;
     await _rememberStudent(me);

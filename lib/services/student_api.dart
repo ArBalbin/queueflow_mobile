@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -70,15 +71,19 @@ class StudentApiClient {
     return StudentSession.fromJson(response);
   }
 
+  /// Uploads the registration photos. [onProgress] gets the share of the
+  /// upload sent so far, 0 to 1; after 1 the server is checking the face.
   Future<Map<String, dynamic>> registerFace(
     List<File> photos,
-    String sessionToken,
-  ) {
+    String sessionToken, {
+    void Function(double sent)? onProgress,
+  }) {
     return _postMultipart(
       '/api/students/me/face',
       fileField: 'photos',
       files: photos,
       sessionToken: sessionToken,
+      onProgress: onProgress,
     );
   }
 
@@ -209,10 +214,13 @@ class StudentApiClient {
     required List<File> files,
     Map<String, String> fields = const {},
     String? sessionToken,
+    void Function(double sent)? onProgress,
   }) async {
     final uri = Uri.parse('$baseUrl$path');
     try {
-      final request = http.MultipartRequest('POST', uri);
+      final request = onProgress == null
+          ? http.MultipartRequest('POST', uri)
+          : _ProgressMultipartRequest('POST', uri, onProgress);
       request.headers.addAll(_headers(sessionToken));
       request.fields.addAll(fields);
       for (final file in files) {
@@ -220,7 +228,9 @@ class StudentApiClient {
           await http.MultipartFile.fromPath(fileField, file.path),
         );
       }
-      final streamed = await request.send().timeout(kUploadTimeout);
+      // Through the app's shared client: request.send() opened a new
+      // connection for every upload, a slow extra step on a weak network.
+      final streamed = await _client.send(request).timeout(kUploadTimeout);
       final response = await http.Response.fromStream(streamed);
       return _decode(response);
     } on QueueApiException {
@@ -275,5 +285,31 @@ class StudentApiClient {
     return trimmed.endsWith('/')
         ? trimmed.substring(0, trimmed.length - 1)
         : trimmed;
+  }
+}
+
+/// A multipart upload that reports how much of it has been sent, so the app
+/// can show progress instead of a spinner that looks stuck.
+class _ProgressMultipartRequest extends http.MultipartRequest {
+  _ProgressMultipartRequest(super.method, super.url, this.onProgress);
+
+  final void Function(double sent) onProgress;
+
+  @override
+  http.ByteStream finalize() {
+    final stream = super.finalize();
+    final total = contentLength;
+    var sent = 0;
+    return http.ByteStream(
+      stream.transform(
+        StreamTransformer<List<int>, List<int>>.fromHandlers(
+          handleData: (chunk, sink) {
+            sent += chunk.length;
+            if (total > 0) onProgress(sent / total);
+            sink.add(chunk);
+          },
+        ),
+      ),
+    );
   }
 }
