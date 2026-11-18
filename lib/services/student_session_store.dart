@@ -29,6 +29,10 @@ class StudentSessionStore {
   // face was not registered land in a classmate's account during the UAT.
   static const _lastStudentKey = 'last_student_id';
   static const _lastHasFaceKey = 'last_student_has_face';
+  // Shown under the face button, so it is clear whose account face sign-in
+  // will open. A tester whose phone had last been used by a student kept
+  // retrying with their own face without knowing why it was refused.
+  static const _lastNameKey = 'last_student_name';
 
   /// Shown when face sign-in is not possible on this phone.
   static const String faceSignInNeedsAccountMessage =
@@ -76,6 +80,7 @@ class StudentSessionStore {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_lastStudentKey, p.studentId);
       await prefs.setBool(_lastHasFaceKey, p.hasFaceEmbedding);
+      await prefs.setString(_lastNameKey, shortName(p.fullName));
     } catch (_) {
       // Face sign-in then asks for Gbox once more; nothing else depends on it.
     }
@@ -86,24 +91,42 @@ class StudentSessionStore {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_lastStudentKey);
       await prefs.remove(_lastHasFaceKey);
+      await prefs.remove(_lastNameKey);
     } catch (_) {}
   }
 
-  /// The account face sign-in may open on this phone, or null with the
-  /// reason it is not available.
-  static Future<({int? studentId, String? reason})> faceSignInAccount() async {
+  /// "Archie B." from "Archie D. Balbin" or "BALBIN, ARCHIE D.": enough to
+  /// recognise your own account, without showing a full name.
+  static String shortName(String? full) {
+    var name = (full ?? '').trim();
+    if (name.isEmpty) return '';
+    if (name.contains(',')) {
+      final parts = name.split(',');
+      name = '${parts.sublist(1).join(' ').trim()} ${parts.first.trim()}';
+    }
+    final words = name.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    String cap(String w) => w[0].toUpperCase() + w.substring(1).toLowerCase();
+    if (words.length == 1) return cap(words.first);
+    return '${cap(words.first)} ${words.last[0].toUpperCase()}.';
+  }
+
+  /// The account face sign-in may open on this phone and its short name, or
+  /// no account with the reason face sign-in is not available.
+  static Future<({int? studentId, String? reason, String? name})>
+  faceSignInAccount() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final id = prefs.getInt(_lastStudentKey);
+      final name = prefs.getString(_lastNameKey);
       if (id == null) {
-        return (studentId: null, reason: faceSignInNeedsAccountMessage);
+        return (studentId: null, reason: faceSignInNeedsAccountMessage, name: null);
       }
       if (prefs.getBool(_lastHasFaceKey) != true) {
-        return (studentId: null, reason: faceNotRegisteredMessage);
+        return (studentId: null, reason: faceNotRegisteredMessage, name: name);
       }
-      return (studentId: id, reason: null);
+      return (studentId: id, reason: null, name: name);
     } catch (_) {
-      return (studentId: null, reason: faceSignInNeedsAccountMessage);
+      return (studentId: null, reason: faceSignInNeedsAccountMessage, name: null);
     }
   }
 

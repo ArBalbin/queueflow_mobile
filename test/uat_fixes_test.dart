@@ -57,9 +57,18 @@ void main() {
       SharedPreferences.setMockInitialValues({
         'last_student_id': 22,
         'last_student_has_face': true,
+        'last_student_name': 'Archie B.',
       });
       final account = await StudentSessionStore.faceSignInAccount();
       expect(account.studentId, 22);
+      expect(account.name, 'Archie B.', reason: 'shown under the face button');
+    });
+
+    test('the name shown is short, whatever form Google gives it in', () {
+      expect(StudentSessionStore.shortName('Archie D. Balbin'), 'Archie B.');
+      expect(StudentSessionStore.shortName('BALBIN, ARCHIE D.'), 'Archie B.');
+      expect(StudentSessionStore.shortName('archie'), 'Archie');
+      expect(StudentSessionStore.shortName(null), '');
     });
   });
 }
