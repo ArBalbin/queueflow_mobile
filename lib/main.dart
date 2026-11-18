@@ -30,6 +30,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   IdleLogout(appNavigatorKey).start();
   TurnNotifier.init();
+  tabScreenBuilder = (name) => appRoutes[name];
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Color(0xFF1A1A2E),
@@ -50,26 +51,30 @@ class QueueFlowApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
       initialRoute: '/',
-      routes: {
-        '/': (_) => const _BootstrapScreen(),
-        '/student/login': (_) => const StudentLoginScreen(),
-        '/student/school-id': (_) => const SchoolIdScreen(),
-        '/student/face-capture': (_) => const FaceCaptureScreen(),
-        '/student/home': (_) => const StudentHomeScreen(),
-        '/ticket/lookup': (_) => LoginScreen(),
-        '/queue/waiting': (_) => const QueueWaitingScreen(),
-        '/queue/next': (_) => const YoureNextScreen(),
-        '/queue/complete': (_) => const ServiceCompleteScreen(),
-        '/queue/exit': (_) => const ExitNotificationScreen(),
-        '/queue/skipped': (_) => const SkippedScreen(),
-        '/queue/serving': (_) => const ServingScreen(),
-        '/history': (_) => const HistoryScreen(),
-        '/profile': (_) => const ProfileScreen(),
-        '/help': (_) => HelpScreen(),
-      },
+      routes: appRoutes,
     );
   }
 }
+
+/// Every screen by route name; also used to switch bottom-navigation tabs
+/// without the slide transition (see switchTab).
+final Map<String, WidgetBuilder> appRoutes = {
+  '/': (_) => const _BootstrapScreen(),
+  '/student/login': (_) => const StudentLoginScreen(),
+  '/student/school-id': (_) => const SchoolIdScreen(),
+  '/student/face-capture': (_) => const FaceCaptureScreen(),
+  '/student/home': (_) => const StudentHomeScreen(),
+  '/ticket/lookup': (_) => LoginScreen(),
+  '/queue/waiting': (_) => const QueueWaitingScreen(),
+  '/queue/next': (_) => const YoureNextScreen(),
+  '/queue/complete': (_) => const ServiceCompleteScreen(),
+  '/queue/exit': (_) => const ExitNotificationScreen(),
+  '/queue/skipped': (_) => const SkippedScreen(),
+  '/queue/serving': (_) => const ServingScreen(),
+  '/history': (_) => const HistoryScreen(),
+  '/profile': (_) => const ProfileScreen(),
+  '/help': (_) => HelpScreen(),
+};
 
 /// Decides where to land on launch: a still-valid saved student session
 /// skips straight to home (or face capture, if that step is incomplete);

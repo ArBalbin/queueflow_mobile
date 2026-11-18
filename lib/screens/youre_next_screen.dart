@@ -131,7 +131,7 @@ class _YoureNextScreenState extends State<YoureNextScreen> {
         currentIndex: 0,
         onTap: (i) {
           if (i != 0) {
-            Navigator.pushReplacementNamed(context, routeForBottomNavIndex(i));
+            switchTab(context, i);
           }
         },
       ),

@@ -144,7 +144,7 @@ class _SkippedScreenState extends State<SkippedScreen> {
         currentIndex: 0,
         onTap: (i) {
           QueueSessionStore.clear();
-          Navigator.pushReplacementNamed(context, routeForBottomNavIndex(i));
+          switchTab(context, i);
         },
       ),
     );

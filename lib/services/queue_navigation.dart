@@ -67,3 +67,31 @@ String routeForBottomNavIndex(int index) {
     _ => routeForCurrentQueue(),
   };
 }
+
+/// Builds the screen for a route name. Set by main.dart, so tab switches can
+/// build a screen without this file importing every screen.
+WidgetBuilder? Function(String name) tabScreenBuilder = (_) => null;
+
+/// Switches bottom-navigation tabs in place with a quick fade.
+///
+/// Tabs used the slide-in-from-the-side transition meant for opening a new
+/// screen; students in the user acceptance test found it "weird", like
+/// scrolling a feed. Opening a screen and going back still slide.
+void switchTab(BuildContext context, int index) {
+  final name = routeForBottomNavIndex(index);
+  final builder = tabScreenBuilder(name);
+  if (builder == null) {
+    Navigator.of(context).pushReplacementNamed(name);
+    return;
+  }
+  Navigator.of(context).pushReplacement(
+    PageRouteBuilder<void>(
+      settings: RouteSettings(name: name),
+      pageBuilder: (ctx, _, _) => builder(ctx),
+      transitionDuration: const Duration(milliseconds: 150),
+      reverseTransitionDuration: Duration.zero,
+      transitionsBuilder: (_, animation, _, child) =>
+          FadeTransition(opacity: animation, child: child),
+    ),
+  );
+}

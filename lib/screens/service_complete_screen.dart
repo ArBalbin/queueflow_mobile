@@ -142,7 +142,8 @@ class ServiceCompleteScreen extends StatelessWidget {
         currentIndex: 1,
         onTap: (i) {
           if (i != 1) {
-            _leave(context, () => routeForBottomNavIndex(i));
+            QueueSessionStore.clear();
+            switchTab(context, i);
           }
         },
       ),

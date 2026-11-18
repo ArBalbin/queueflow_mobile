@@ -50,7 +50,7 @@ class HistoryScreen extends StatelessWidget {
         currentIndex: 1,
         onTap: (i) {
           if (i != 1) {
-            Navigator.pushReplacementNamed(context, routeForBottomNavIndex(i));
+            switchTab(context, i);
           }
         },
       ),

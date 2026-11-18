@@ -131,7 +131,7 @@ class HelpScreen extends StatelessWidget {
         currentIndex: 3,
         onTap: (i) {
           if (i != 3) {
-            Navigator.pushReplacementNamed(context, routeForBottomNavIndex(i));
+            switchTab(context, i);
           }
         },
       ),

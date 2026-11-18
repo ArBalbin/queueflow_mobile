@@ -275,33 +275,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               ),
               const SizedBox(height: 20),
 
-              const SectionLabel('QUEUE RIGHT NOW'),
-              const SizedBox(height: 8),
-              _StatsCard(
-                inLine: prediction == null ? '—' : '${prediction.queueLength}',
-                wait: prediction == null ? '—' : prediction.newArrivalWaitLabel,
-                counters: prediction == null
-                    ? '—'
-                    : '${prediction.activeCounters}',
-              ),
-              if (prediction != null) ...[
-                if (isLongWait(prediction.newArrivalWaitMinutes)) ...[
-                  const SizedBox(height: 12),
-                  AlertBanner(
-                    text:
-                        'The line is long right now: ${describeWait(prediction.newArrivalWaitMinutes)} '
-                        'for someone getting a number now.',
-                    bg: AppColors.amberLight,
-                    borderColor: AppColors.amberBright,
-                    dotColor: AppColors.amberBright,
-                    textColor: AppColors.amberText,
-                  ),
-                ],
-                const SizedBox(height: 12),
-                NowServingCard(prediction: prediction),
-              ],
-              const SizedBox(height: 20),
-
               const SectionLabel('YOUR STATUS'),
               const SizedBox(height: 8),
               // Where the student is in getting a number: the camera's face
@@ -438,6 +411,33 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 ),
               const SizedBox(height: 20),
 
+              const SectionLabel('QUEUE RIGHT NOW'),
+              const SizedBox(height: 8),
+              _StatsCard(
+                inLine: prediction == null ? '—' : '${prediction.queueLength}',
+                wait: prediction == null ? '—' : prediction.newArrivalWaitLabel,
+                counters: prediction == null
+                    ? '—'
+                    : '${prediction.activeCounters}',
+              ),
+              if (prediction != null) ...[
+                if (isLongWait(prediction.newArrivalWaitMinutes)) ...[
+                  const SizedBox(height: 12),
+                  AlertBanner(
+                    text:
+                        'The line is long right now: ${describeWait(prediction.newArrivalWaitMinutes)} '
+                        'for someone getting a number now.',
+                    bg: AppColors.amberLight,
+                    borderColor: AppColors.amberBright,
+                    dotColor: AppColors.amberBright,
+                    textColor: AppColors.amberText,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                NowServingCard(prediction: prediction),
+              ],
+              const SizedBox(height: 20),
+
               const SectionLabel('WHAT YOU CAN DO'),
               const SizedBox(height: 8),
               _ActionCard(
@@ -492,7 +492,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           if (i == 0) {
             _refresh();
           } else {
-            Navigator.pushReplacementNamed(context, routeForBottomNavIndex(i));
+            switchTab(context, i);
           }
         },
       ),

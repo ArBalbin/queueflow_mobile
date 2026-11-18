@@ -361,7 +361,7 @@ class ProfileScreen extends StatelessWidget {
         currentIndex: 2,
         onTap: (i) {
           if (i != 2) {
-            Navigator.pushReplacementNamed(context, routeForBottomNavIndex(i));
+            switchTab(context, i);
           }
         },
       ),

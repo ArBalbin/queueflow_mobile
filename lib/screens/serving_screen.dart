@@ -250,7 +250,7 @@ class _ServingScreenState extends State<ServingScreen> {
         currentIndex: 0,
         onTap: (i) {
           if (i != 0) {
-            Navigator.pushReplacementNamed(context, routeForBottomNavIndex(i));
+            switchTab(context, i);
           }
         },
       ),
