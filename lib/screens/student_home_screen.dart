@@ -328,8 +328,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   title: 'Your number was skipped',
                   message:
                       'Staff marked you as not present when your number was called. '
-                      "To get a new one, step out of the camera's view for a few "
-                      'seconds, then ask again.',
+                      'Still need the cashier? Tap below to get a new number.',
                   action: PrimaryButton(
                     label: _joinBusy ? 'Requesting…' : 'Get a Queue Number',
                     bg: AppColors.green,
@@ -343,8 +342,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   iconColor: AppColors.green,
                   title: "You're done",
                   message:
-                      "To get another number, step out of the camera's view for a few "
-                      'seconds, then ask again.',
+                      'Your number has been served. Need the cashier again? '
+                      'Tap below to get another number.',
                   action: PrimaryButton(
                     label: _joinBusy ? 'Requesting…' : 'Get Another Number',
                     outlined: true,

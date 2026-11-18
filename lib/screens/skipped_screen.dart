@@ -116,8 +116,8 @@ class _SkippedScreenState extends State<SkippedScreen> {
                     const SizedBox(height: 6),
                     Text(
                       loggedIn
-                          ? 'Still need the cashier? Step away from the camera for a few '
-                                'seconds, then tap Get a Queue Number to get a new one.'
+                          ? 'Still need the cashier? Tap Get a Queue Number on your '
+                                'dashboard to get a new one.'
                           : 'Still need the cashier? Take a new ticket at the kiosk.',
                       style: const TextStyle(
                         fontSize: 13,

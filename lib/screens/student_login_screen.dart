@@ -27,23 +27,6 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   /// Said under the spinner, so a slow sign-in does not look stuck.
   String? _loadingMessage;
 
-  /// Whose account face sign-in opens on this phone ("Archie B."), shown
-  /// under the button; null when face sign-in is not set up here.
-  String? _faceAccountName;
-
-  @override
-  void initState() {
-    super.initState();
-    StudentSessionStore.faceSignInAccount().then((account) {
-      if (!mounted) return;
-      final name = account.name;
-      setState(() {
-        _faceAccountName =
-            account.studentId != null && name != null && name.isNotEmpty ? name : null;
-      });
-    });
-  }
-
   Future<void> _handleGoogleSignIn() async {
     setState(() {
       _isLoading = true;
@@ -285,19 +268,6 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                           fontSize: 15,
                           onTap: _handleFaceLogin,
                         ),
-                        if (_faceAccountName != null) ...[
-                          const SizedBox(height: 6),
-                          Text(
-                            'Face sign-in for $_faceAccountName. '
-                            'Not you? Sign in with Gbox.',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppColors.dark,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
                         const SizedBox(height: 10),
                         PrimaryButton(
                           label: 'Sign in with Gbox',
