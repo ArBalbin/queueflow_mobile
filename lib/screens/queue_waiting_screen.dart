@@ -86,12 +86,18 @@ class _QueueWaitingScreenState extends State<QueueWaitingScreen> {
     }
     TurnSoonNotice.markShown(status.queueNumber);
     final ahead = status.positionInLine - 1;
-    final when = minutes! < 1 ? 'in less than a minute' : 'in ${describeWait(minutes)}';
+    final when = minutes! < 1
+        ? 'in less than a minute'
+        : 'in ${describeWait(minutes)}';
     final message =
         '${status.queueLabel} should be called $when '
         '($ahead ${ahead == 1 ? 'person' : 'people'} ahead of you). '
         'Head back to the cashier queue area now.';
-    TurnNotifier.showOnce('soon-${status.queueNumber}', 'Your turn is near', message);
+    TurnNotifier.showOnce(
+      'soon-${status.queueNumber}',
+      'Your turn is near',
+      message,
+    );
     HapticFeedback.heavyImpact();
     showDialog<void>(
       context: context,
@@ -343,11 +349,15 @@ class _WaitingBody extends StatelessWidget {
                                       value: '',
                                       label: 'Est. wait (min:sec)',
                                       child: LiveCountdown(
-                                        seconds: status
+                                        seconds:
+                                            status
                                                 .prediction
                                                 ?.estimatedWaitSeconds ??
                                             0,
                                         anchor: snapshot.fetchedAt,
+                                        running:
+                                            status.prediction?.lineMoving ??
+                                            true,
                                         zeroText: 'any moment',
                                         style: const TextStyle(
                                           fontSize: 16,
@@ -367,10 +377,9 @@ class _WaitingBody extends StatelessWidget {
                                   ),
                                   Expanded(
                                     child: _StatColumn(
-                                      value: snapshot.activeCounters > 0
-                                          ? '${snapshot.activeCounters}'
-                                          : '-',
-                                      label: 'Windows open',
+                                      value:
+                                          '${status.prediction?.windowsCalling ?? snapshot.prediction.windowsCalling}',
+                                      label: 'Windows calling',
                                     ),
                                   ),
                                 ],
@@ -527,7 +536,6 @@ class _WaitingBody extends StatelessWidget {
       );
     }).toList();
   }
-
 }
 
 class _StatColumn extends StatelessWidget {

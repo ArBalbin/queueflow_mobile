@@ -415,15 +415,38 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               const SizedBox(height: 8),
               _StatsCard(
                 inLine: prediction == null ? '—' : '${prediction.queueLength}',
-                // Minutes and seconds for someone getting a number now.
-                wait: prediction == null
-                    ? '—'
-                    : formatClock(prediction.newArrivalWaitSeconds),
+                wait: '—',
+                // Minutes and seconds for someone getting a number now,
+                // counting down while someone is at a window.
+                waitWidget: prediction == null
+                    ? null
+                    : LiveCountdown(
+                        seconds: prediction.newArrivalWaitSeconds,
+                        anchor: prediction.receivedAt,
+                        running: prediction.lineMoving,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.dark,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
+                      ),
                 counters: prediction == null
                     ? '—'
-                    : '${prediction.activeCounters}',
+                    : '${prediction.windowsCalling}',
               ),
               if (prediction != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  prediction.queueLength == 0
+                      ? 'No one is in line right now.'
+                      : 'For someone getting a number now: ${restsOn(ahead: prediction.queueLength, windowsCalling: prediction.windowsCalling, avgSeconds: prediction.avgServiceSeconds)}.',
+                  style: AppText.caption,
+                ),
+                if (!prediction.lineMoving && prediction.queueLength > 0) ...[
+                  const SizedBox(height: 8),
+                  const PausedNote(),
+                ],
                 if (isLongWait(prediction.newArrivalWaitMinutes)) ...[
                   const SizedBox(height: 12),
                   AlertBanner(
@@ -563,10 +586,12 @@ class _IdentityCard extends StatelessWidget {
 class _StatsCard extends StatelessWidget {
   final String inLine;
   final String wait;
+  final Widget? waitWidget;
   final String counters;
   const _StatsCard({
     required this.inLine,
     required this.wait,
+    this.waitWidget,
     required this.counters,
   });
 
@@ -586,11 +611,15 @@ class _StatsCard extends StatelessWidget {
           ),
           const _StatDivider(),
           Expanded(
-            child: _StatColumn(value: wait, label: 'Est. wait (min:sec)'),
+            child: _StatColumn(
+              value: wait,
+              label: 'Est. wait (min:sec)',
+              child: waitWidget,
+            ),
           ),
           const _StatDivider(),
           Expanded(
-            child: _StatColumn(value: counters, label: 'Windows open'),
+            child: _StatColumn(value: counters, label: 'Windows calling'),
           ),
         ],
       ),
@@ -601,7 +630,10 @@ class _StatsCard extends StatelessWidget {
 class _StatColumn extends StatelessWidget {
   final String value;
   final String label;
-  const _StatColumn({required this.value, required this.label});
+
+  /// Shown instead of [value] when given, e.g. a live countdown.
+  final Widget? child;
+  const _StatColumn({required this.value, required this.label, this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -617,15 +649,17 @@ class _StatColumn extends StatelessWidget {
           // one line, so short numbers keep their full size.
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              maxLines: 1,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.dark,
-              ),
-            ),
+            child:
+                child ??
+                Text(
+                  value,
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.dark,
+                  ),
+                ),
           ),
           const SizedBox(height: 4),
           Text(label, textAlign: TextAlign.center, style: AppText.caption),

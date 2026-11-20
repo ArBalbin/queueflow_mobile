@@ -61,16 +61,28 @@ class LiveCountdown extends StatelessWidget {
   final TextStyle? style;
   final String zeroText;
 
+  /// False while the line is paused (nobody at a window): the time is shown
+  /// as the server gave it and does not count down.
+  final bool running;
+
   const LiveCountdown({
     super.key,
     required this.seconds,
     required this.anchor,
     this.style,
     this.zeroText = '0:00',
+    this.running = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (!running) {
+      return Text(
+        seconds <= 0 ? zeroText : formatClock(seconds),
+        maxLines: 1,
+        style: style,
+      );
+    }
     return Ticking(
       anchor: anchor,
       builder: (context, since) {
@@ -104,6 +116,62 @@ class LiveCountUp extends StatelessWidget {
       anchor: anchor,
       builder: (context, since) =>
           Text(formatClock(seconds + since), maxLines: 1, style: style),
+    );
+  }
+}
+
+/// What an estimate was worked out from, in words a student can check:
+/// "2 ahead of you · 1 window calling · about 1:52 each".
+String restsOn({
+  required int ahead,
+  required int windowsCalling,
+  required int avgSeconds,
+  String aheadLabel = 'in line',
+}) {
+  final people = '$ahead $aheadLabel';
+  final windows = windowsCalling <= 0
+      ? 'no window calling yet (worked out for 1)'
+      : '$windowsCalling window${windowsCalling == 1 ? '' : 's'} calling';
+  final each = avgSeconds > 0 ? ' · about ${formatClock(avgSeconds)} each' : '';
+  return '$people · $windows$each';
+}
+
+/// Said instead of counting down while nobody is at a window.
+class PausedNote extends StatelessWidget {
+  const PausedNote({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.bg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.pause_circle_outline_rounded,
+            size: 16,
+            color: AppColors.textMuted,
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Paused: no one is at a window, so this time does not count down '
+              'until a window calls the next number.',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textMuted,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -178,6 +246,7 @@ class ServiceTimeCard extends StatelessWidget {
                   LiveCountdown(
                     seconds: estimate.estimatedWaitSeconds,
                     anchor: anchor,
+                    running: estimate.lineMoving,
                     zeroText: 'any moment',
                     style: const TextStyle(
                       fontSize: 18,
@@ -229,9 +298,30 @@ class ServiceTimeCard extends StatelessWidget {
                 basis.startsWith('last')
                     ? 'per student, from the $basis'
                     : 'per student, the usual pace until services are timed',
-                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textMuted,
+                ),
               ),
             ),
+          const SizedBox(height: 10),
+          Text(
+            restsOn(
+              ahead: estimate.peopleAhead,
+              windowsCalling: estimate.windowsCalling,
+              avgSeconds: avg,
+              aheadLabel: 'ahead of you',
+            ),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.dark,
+              height: 1.4,
+            ),
+          ),
+          if (!estimate.lineMoving) ...[
+            const SizedBox(height: 8),
+            const PausedNote(),
+          ],
           if (estimate.adjustmentNote.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(

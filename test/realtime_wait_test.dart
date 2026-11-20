@@ -15,25 +15,28 @@ void main() {
   });
 
   group('The real-time estimate from the server', () {
-    test('carries seconds, the time of service and the average service time', () {
-      final e = QueueEstimate.fromJson({
-        'position': 3,
-        'estimated_wait_time_minutes': 2.7,
-        'estimated_wait_seconds': 164,
-        'estimated_wait_time_label': '2 min 44 sec',
-        'estimated_service_start_at': '2026-11-22T14:41:30+08:00',
-        'estimated_service_start_label': '2:41:30 PM',
-        'estimated_service_time_min': 1.95,
-        'avg_service_seconds': 117,
-        'avg_service_basis': 'last 4 services',
-        'adjustment_note': 'Window 1 has been serving Q001 for 5 min 00 sec.',
-      });
-      expect(e.estimatedWaitSeconds, 164);
-      expect(e.estimatedServiceStartLabel, '2:41:30 PM');
-      expect(e.avgServiceSeconds, 117);
-      expect(e.avgServiceBasis, 'last 4 services');
-      expect(e.adjustmentNote, startsWith('Window 1'));
-    });
+    test(
+      'carries seconds, the time of service and the average service time',
+      () {
+        final e = QueueEstimate.fromJson({
+          'position': 3,
+          'estimated_wait_time_minutes': 2.7,
+          'estimated_wait_seconds': 164,
+          'estimated_wait_time_label': '2 min 44 sec',
+          'estimated_service_start_at': '2026-11-22T14:41:30+08:00',
+          'estimated_service_start_label': '2:41:30 PM',
+          'estimated_service_time_min': 1.95,
+          'avg_service_seconds': 117,
+          'avg_service_basis': 'last 4 services',
+          'adjustment_note': 'Window 1 has been serving Q001 for 5 min 00 sec.',
+        });
+        expect(e.estimatedWaitSeconds, 164);
+        expect(e.estimatedServiceStartLabel, '2:41:30 PM');
+        expect(e.avgServiceSeconds, 117);
+        expect(e.avgServiceBasis, 'last 4 services');
+        expect(e.adjustmentNote, startsWith('Window 1'));
+      },
+    );
 
     test('an older server that sends minutes only still gives seconds', () {
       final e = QueueEstimate.fromJson({
@@ -65,60 +68,131 @@ void main() {
       expect(p.nowServing.single.runningLong, isTrue);
     });
 
-    test('a called ticket says how long ago and how long to reach the window', () {
-      final s = QueueStatus.fromJson({
-        'queue_number': 7,
-        'counter_number': 2,
-        'seconds_at_counter': 12,
-        'arrive_within_seconds': 90,
+    test(
+      'a called ticket says how long ago and how long to reach the window',
+      () {
+        final s = QueueStatus.fromJson({
+          'queue_number': 7,
+          'counter_number': 2,
+          'seconds_at_counter': 12,
+          'arrive_within_seconds': 90,
+        });
+        expect(s.secondsAtCounter, 12);
+        expect(s.arriveWithinSeconds, 90);
+      },
+    );
+  });
+
+  group('Saying what an estimate rests on', () {
+    test('people ahead, windows calling and the average', () {
+      expect(
+        restsOn(
+          ahead: 2,
+          windowsCalling: 1,
+          avgSeconds: 112,
+          aheadLabel: 'ahead of you',
+        ),
+        '2 ahead of you · 1 window calling · about 1:52 each',
+      );
+      expect(
+        restsOn(ahead: 2, windowsCalling: 0, avgSeconds: 112),
+        '2 in line · no window calling yet (worked out for 1) · about 1:52 each',
+      );
+    });
+
+    test('the server says whether the line is moving', () {
+      final paused = QueuePrediction.fromJson({
+        'line_moving': false,
+        'windows_calling': 0,
       });
-      expect(s.secondsAtCounter, 12);
-      expect(s.arriveWithinSeconds, 90);
+      expect(paused.lineMoving, isFalse);
+      expect(paused.windowsCalling, 0);
+      final older = QueuePrediction.fromJson({'active_counters': 3});
+      expect(
+        older.lineMoving,
+        isTrue,
+        reason: 'an older server: count down as before',
+      );
+      expect(older.windowsCalling, 3);
+      final e = QueueEstimate.fromJson({
+        'line_moving': false,
+        'people_ahead': 2,
+      });
+      expect(e.lineMoving, isFalse);
+      expect(e.peopleAhead, 2);
     });
   });
 
-  testWidgets('the wait counts down on the phone between requests', (tester) async {
-    final anchor = DateTime.now();
+  testWidgets('a paused line shows the time without counting it down', (
+    tester,
+  ) async {
+    final anchor = DateTime.now().subtract(const Duration(seconds: 30));
     await tester.pumpWidget(
       MaterialApp(
-        home: LiveCountdown(seconds: 125, anchor: anchor),
+        home: LiveCountdown(seconds: 224, anchor: anchor, running: false),
       ),
+    );
+    expect(find.text('3:44'), findsOneWidget, reason: 'not 3:14');
+  });
+
+  testWidgets('a moving line counts down from when it was received', (
+    tester,
+  ) async {
+    final anchor = DateTime.now().subtract(const Duration(seconds: 30));
+    await tester.pumpWidget(
+      MaterialApp(home: LiveCountdown(seconds: 224, anchor: anchor)),
+    );
+    expect(find.text('3:14'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('the wait counts down on the phone between requests', (
+    tester,
+  ) async {
+    final anchor = DateTime.now();
+    await tester.pumpWidget(
+      MaterialApp(home: LiveCountdown(seconds: 125, anchor: anchor)),
     );
     expect(find.text('2:05'), findsOneWidget);
     await tester.pump(const Duration(seconds: 1));
   });
 
-  testWidgets('the service time card shows the clock time, average and why it moved', (
-    tester,
-  ) async {
-    const estimate = QueueEstimate(
-      position: 2,
-      estimatedWaitMinutes: 1.3,
-      estimatedWaitLabel: '1 min 16 sec',
-      estimatedServiceStartAt: null,
-      estimatedServiceFinishAt: null,
-      estimatedServiceTimeMinutes: 2.3,
-      estimatedWaitSeconds: 76,
-      estimatedServiceStartLabel: '2:41:30 PM',
-      avgServiceSeconds: 140,
-      avgServiceBasis: 'last 4 services',
-      adjustmentNote: 'Window 1 has been serving Q001 for 5 min 00 sec, '
-          'longer than the average of 2 min 20 sec, so your time moved later.',
-    );
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: ServiceTimeCard(estimate: estimate, anchor: DateTime.now()),
+  testWidgets(
+    'the service time card shows the clock time, average and why it moved',
+    (tester) async {
+      const estimate = QueueEstimate(
+        position: 2,
+        estimatedWaitMinutes: 1.3,
+        estimatedWaitLabel: '1 min 16 sec',
+        estimatedServiceStartAt: null,
+        estimatedServiceFinishAt: null,
+        estimatedServiceTimeMinutes: 2.3,
+        estimatedWaitSeconds: 76,
+        estimatedServiceStartLabel: '2:41:30 PM',
+        avgServiceSeconds: 140,
+        avgServiceBasis: 'last 4 services',
+        adjustmentNote:
+            'Window 1 has been serving Q001 for 5 min 00 sec, '
+            'longer than the average of 2 min 20 sec, so your time moved later.',
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ServiceTimeCard(
+                estimate: estimate,
+                anchor: DateTime.now(),
+              ),
+            ),
           ),
         ),
-      ),
-    );
-    expect(find.text('Estimated time of service'), findsOneWidget);
-    expect(find.text('2:41:30 PM'), findsOneWidget);
-    expect(find.text('2:20'), findsOneWidget, reason: 'average service time');
-    expect(find.textContaining('last 4 services'), findsOneWidget);
-    expect(find.textContaining('so your time moved later'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 1));
-  });
+      );
+      expect(find.text('Estimated time of service'), findsOneWidget);
+      expect(find.text('2:41:30 PM'), findsOneWidget);
+      expect(find.text('2:20'), findsOneWidget, reason: 'average service time');
+      expect(find.textContaining('last 4 services'), findsOneWidget);
+      expect(find.textContaining('so your time moved later'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
 }

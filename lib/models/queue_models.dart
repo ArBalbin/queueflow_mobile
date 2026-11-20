@@ -78,6 +78,14 @@ class QueueEstimate {
   /// Why the time is moving later, when a window is running long; else empty.
   final String adjustmentNote;
 
+  /// What the estimate was worked out from: people still waiting ahead, the
+  /// windows calling (0 when none is, and one is assumed), and whether anyone
+  /// is at a window. With nobody at one the line is paused: the time does not
+  /// count down until a window calls the next number.
+  final int peopleAhead;
+  final int windowsCalling;
+  final bool lineMoving;
+
   const QueueEstimate({
     required this.position,
     required this.estimatedWaitMinutes,
@@ -91,6 +99,9 @@ class QueueEstimate {
     this.avgServiceSeconds = 0,
     this.avgServiceBasis = '',
     this.adjustmentNote = '',
+    this.peopleAhead = 0,
+    this.windowsCalling = 1,
+    this.lineMoving = true,
   });
 
   factory QueueEstimate.fromJson(Map<String, dynamic> json) {
@@ -124,6 +135,10 @@ class QueueEstimate {
       ),
       avgServiceBasis: _readString(json['avg_service_basis']),
       adjustmentNote: _readString(json['adjustment_note']),
+      peopleAhead: _readInt(json['people_ahead']),
+      windowsCalling: _readInt(json['windows_calling'], 1),
+      // An older server does not say; count down as before.
+      lineMoving: _readBool(json['line_moving'], true),
     );
   }
 }
@@ -374,6 +389,11 @@ class QueuePrediction {
   /// When this phone received it, so times can be counted on from there.
   final DateTime receivedAt;
 
+  /// Windows calling numbers now (staff holding one, or someone at it), and
+  /// whether anyone is at a window, i.e. whether the line is moving.
+  final int windowsCalling;
+  final bool lineMoving;
+
   QueuePrediction({
     required this.queueLength,
     required this.activeCounters,
@@ -388,6 +408,8 @@ class QueuePrediction {
     this.avgServiceLabel = '',
     this.avgServiceBasis = '',
     DateTime? receivedAt,
+    this.windowsCalling = 0,
+    this.lineMoving = true,
   }) : receivedAt = receivedAt ?? DateTime.now();
 
   factory QueuePrediction.fromJson(Map<String, dynamic> json) {
@@ -452,6 +474,11 @@ class QueuePrediction {
       ),
       avgServiceLabel: _readString(json['avg_service_label']),
       avgServiceBasis: _readString(json['avg_service_basis']),
+      windowsCalling: _readInt(
+        json['windows_calling'],
+        _readInt(json['active_counters']),
+      ),
+      lineMoving: _readBool(json['line_moving'], true),
     );
   }
 

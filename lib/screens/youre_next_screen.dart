@@ -282,11 +282,14 @@ class _NextBody extends StatelessWidget {
                                     value: '',
                                     label: 'Est. wait',
                                     child: LiveCountdown(
-                                      seconds: status
+                                      seconds:
+                                          status
                                               .prediction
                                               ?.estimatedWaitSeconds ??
                                           0,
                                       anchor: snapshot.fetchedAt,
+                                      running:
+                                          status.prediction?.lineMoving ?? true,
                                       zeroText: 'any moment',
                                       style: const TextStyle(
                                         fontSize: 13,
@@ -303,10 +306,9 @@ class _NextBody extends StatelessWidget {
                                 Expanded(
                                   child: _StatChip(
                                     icon: Icons.storefront_rounded,
-                                    value: snapshot.activeCounters > 0
-                                        ? '${snapshot.activeCounters}'
-                                        : '-',
-                                    label: 'Windows open',
+                                    value:
+                                        '${status.prediction?.windowsCalling ?? snapshot.prediction.windowsCalling}',
+                                    label: 'Windows calling',
                                   ),
                                 ),
                               ],
@@ -367,7 +369,8 @@ class _NextBody extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        if (status.prediction != null && !status.isBeingServed) ...[
+                        if (status.prediction != null &&
+                            !status.isBeingServed) ...[
                           ServiceTimeCard(
                             estimate: status.prediction!,
                             anchor: snapshot.fetchedAt,
@@ -513,7 +516,6 @@ class _NextBody extends StatelessWidget {
       ],
     );
   }
-
 }
 
 class _StatChip extends StatelessWidget {
