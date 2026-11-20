@@ -358,7 +358,6 @@ class _WaitingBody extends StatelessWidget {
                                         running:
                                             status.prediction?.lineMoving ??
                                             true,
-                                        zeroText: 'any moment',
                                         style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w700,
@@ -422,6 +421,7 @@ class _WaitingBody extends StatelessWidget {
                           ServiceTimeCard(
                             estimate: status.prediction!,
                             anchor: snapshot.fetchedAt,
+                            waitedSeconds: status.waitTimeSeconds,
                           ),
                           const SizedBox(height: 16),
                         ],

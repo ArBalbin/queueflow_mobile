@@ -83,23 +83,7 @@ void main() {
     );
   });
 
-  group('Saying what an estimate rests on', () {
-    test('people ahead, windows calling and the average', () {
-      expect(
-        restsOn(
-          ahead: 2,
-          windowsCalling: 1,
-          avgSeconds: 112,
-          aheadLabel: 'ahead of you',
-        ),
-        '2 ahead of you · 1 window calling · about 1:52 each',
-      );
-      expect(
-        restsOn(ahead: 2, windowsCalling: 0, avgSeconds: 112),
-        '2 in line · no window calling yet (worked out for 1) · about 1:52 each',
-      );
-    });
-
+  group('Whether the line is moving', () {
     test('the server says whether the line is moving', () {
       final paused = QueuePrediction.fromJson({
         'line_moving': false,
@@ -157,6 +141,22 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   });
 
+  testWidgets('the wait is always a clock, never words', (tester) async {
+    // 20 Nov 2026: at zero it read "any moment", cut to "any" in its box.
+    final anchor = DateTime.now().subtract(const Duration(seconds: 90));
+    await tester.pumpWidget(
+      MaterialApp(home: LiveCountdown(seconds: 60, anchor: anchor)),
+    );
+    expect(find.text('0:00'), findsOneWidget);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LiveCountdown(seconds: 0, anchor: anchor, running: false),
+      ),
+    );
+    expect(find.text('0:00'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   testWidgets(
     'the service time card shows the clock time, average and why it moved',
     (tester) async {
@@ -182,15 +182,17 @@ void main() {
               child: ServiceTimeCard(
                 estimate: estimate,
                 anchor: DateTime.now(),
+                waitedSeconds: 312,
               ),
             ),
           ),
         ),
       );
-      expect(find.text('Estimated time of service'), findsOneWidget);
+      expect(find.text('Your turn at about'), findsOneWidget);
       expect(find.text('2:41:30 PM'), findsOneWidget);
+      expect(find.text('Live'), findsOneWidget);
+      expect(find.text('5:12'), findsOneWidget, reason: 'waiting so far');
       expect(find.text('2:20'), findsOneWidget, reason: 'average service time');
-      expect(find.textContaining('last 4 services'), findsOneWidget);
       expect(find.textContaining('so your time moved later'), findsOneWidget);
       await tester.pump(const Duration(seconds: 1));
     },

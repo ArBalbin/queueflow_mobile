@@ -411,7 +411,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 ),
               const SizedBox(height: 20),
 
-              const SectionLabel('QUEUE RIGHT NOW'),
+              Row(
+                children: [
+                  const Expanded(child: SectionLabel('QUEUE RIGHT NOW')),
+                  // Whether the wait clock is counting: someone is at a window.
+                  if (prediction != null && prediction.queueLength > 0)
+                    LineStatusTag(moving: prediction.lineMoving),
+                ],
+              ),
               const SizedBox(height: 8),
               _StatsCard(
                 inLine: prediction == null ? '—' : '${prediction.queueLength}',
@@ -436,17 +443,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     : '${prediction.windowsCalling}',
               ),
               if (prediction != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  prediction.queueLength == 0
-                      ? 'No one is in line right now.'
-                      : 'For someone getting a number now: ${restsOn(ahead: prediction.queueLength, windowsCalling: prediction.windowsCalling, avgSeconds: prediction.avgServiceSeconds)}.',
-                  style: AppText.caption,
-                ),
-                if (!prediction.lineMoving && prediction.queueLength > 0) ...[
-                  const SizedBox(height: 8),
-                  const PausedNote(),
-                ],
                 if (isLongWait(prediction.newArrivalWaitMinutes)) ...[
                   const SizedBox(height: 12),
                   AlertBanner(

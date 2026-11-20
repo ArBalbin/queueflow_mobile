@@ -146,52 +146,17 @@ class _ServingScreenState extends State<ServingScreen> {
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              if (status != null &&
-                  status.secondsAtCounter != null &&
-                  !_arrived.contains(status.queueNumber)) ...[
-                _ArriveTimer(
-                  window: window,
-                  secondsSinceCalled: status.secondsAtCounter!,
-                  limitSeconds: status.arriveWithinSeconds,
-                  anchor: _snapshot!.fetchedAt,
-                  onArrived: () =>
-                      setState(() => _arrived.add(status.queueNumber)),
-                ),
-                const SizedBox(height: 12),
-              ],
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.storefront_rounded,
-                      color: AppColors.green,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        window == null
-                            ? 'Go to the cashier window now. You are being served there.'
-                            : 'Go to Window $window now. You are being served there; '
-                                  'this screen changes when the cashier finishes.',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.dark,
-                          height: 1.45,
-                        ),
+                    if (status != null && status.secondsAtCounter != null) ...[
+                      const SizedBox(height: 18),
+                      _WindowClock(
+                        secondsSinceCalled: status.secondsAtCounter!,
+                        limitSeconds: status.arriveWithinSeconds,
+                        anchor: _snapshot!.fetchedAt,
+                        arrived: _arrived.contains(status.queueNumber),
+                        onArrived: () =>
+                            setState(() => _arrived.add(status.queueNumber)),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -276,114 +241,117 @@ class _ServingScreenState extends State<ServingScreen> {
   }
 }
 
-/// The time the student has to reach their window, counted down from the
-/// moment it was called. When it runs out the student is told to hurry; the
-/// number is not skipped by the app. Staff decide that at the window.
-class _ArriveTimer extends StatelessWidget {
-  final int? window;
+/// The clock in the "It's your turn" panel. First the time left to reach the
+/// window, counted down from the call; once the student taps "I'm at the
+/// window", how long they have been at it, counting up. Running out of time
+/// only tells the student to hurry: staff decide whether to skip a number.
+class _WindowClock extends StatelessWidget {
   final int secondsSinceCalled;
   final int limitSeconds;
   final DateTime anchor;
+  final bool arrived;
   final VoidCallback onArrived;
 
-  const _ArriveTimer({
-    required this.window,
+  const _WindowClock({
     required this.secondsSinceCalled,
     required this.limitSeconds,
     required this.anchor,
+    required this.arrived,
     required this.onArrived,
   });
 
   @override
   Widget build(BuildContext context) {
-    final place = window == null ? 'the window' : 'Window $window';
     return Ticking(
       anchor: anchor,
       builder: (context, since) {
-        final left = limitSeconds - (secondsSinceCalled + since);
-        final over = left <= 0;
-        final hurry = !over && left <= 15;
-        final fg = over
+        final elapsed = secondsSinceCalled + since;
+        final left = limitSeconds - elapsed;
+        final late = !arrived && left <= 0;
+        final hurry = !arrived && !late && left <= 15;
+        final color = late
             ? AppColors.redDark
             : hurry
             ? AppColors.amberText
             : AppColors.greenDark;
-        final bg = over
-            ? AppColors.redLight
-            : hurry
-            ? AppColors.amberLight
-            : AppColors.greenLight;
         final total = limitSeconds <= 0 ? 1 : limitSeconds;
-        final progress = over ? 0.0 : (left / total).clamp(0.0, 1.0);
         return Container(
-          padding: const EdgeInsets.all(16),
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
           decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(14),
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Icon(
-                    over ? Icons.directions_run_rounded : Icons.timer_rounded,
+                    arrived ? Icons.storefront_rounded : Icons.timer_rounded,
                     size: 18,
-                    color: fg,
+                    color: color,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      over ? 'Time is up' : 'Reach $place within',
+                      arrived
+                          ? 'At the window'
+                          : late
+                          ? 'Late: go now'
+                          : 'Time to reach the window',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: fg,
+                        color: color,
                       ),
                     ),
                   ),
                   Text(
-                    over ? '+${formatClock(-left)}' : formatClock(left),
+                    arrived
+                        ? formatClock(elapsed)
+                        : late
+                        ? '+${formatClock(-left)}'
+                        : formatClock(left),
                     style: TextStyle(
-                      fontSize: 26,
+                      fontSize: 28,
                       fontWeight: FontWeight.w800,
-                      color: fg,
+                      color: color,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: AppColors.white,
-                  valueColor: AlwaysStoppedAnimation<Color>(fg),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                over
-                    ? 'Go to $place now. Staff may skip a number that does not '
-                          'come to its window.'
-                    : 'Your number was called. Go to $place with your payment '
-                          'before the time runs out.',
-                style: TextStyle(fontSize: 13, color: fg, height: 1.4),
-              ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: onArrived,
-                  icon: Icon(Icons.check_circle_rounded, size: 18, color: fg),
-                  label: Text(
-                    "I'm at the window",
-                    style: TextStyle(fontWeight: FontWeight.w700, color: fg),
+              if (!arrived) ...[
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: late ? 0.0 : (left / total).clamp(0.0, 1.0),
+                    minHeight: 6,
+                    backgroundColor: AppColors.border,
+                    valueColor: AlwaysStoppedAnimation<Color>(color),
                   ),
                 ),
-              ),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: onArrived,
+                    icon: const Icon(
+                      Icons.check_circle_rounded,
+                      size: 18,
+                      color: AppColors.green,
+                    ),
+                    label: const Text(
+                      "I'm at the window",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.green,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );

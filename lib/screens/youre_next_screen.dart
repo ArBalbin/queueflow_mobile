@@ -290,7 +290,6 @@ class _NextBody extends StatelessWidget {
                                       anchor: snapshot.fetchedAt,
                                       running:
                                           status.prediction?.lineMoving ?? true,
-                                      zeroText: 'any moment',
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
@@ -356,8 +355,8 @@ class _NextBody extends StatelessWidget {
                               SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'Wait for a window to call your number. When one does, '
-                                  'this screen tells you which window to go to.',
+                                  'Stay near the queue area. This screen shows your '
+                                  'window when you are called.',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: AppColors.dark,
@@ -374,6 +373,7 @@ class _NextBody extends StatelessWidget {
                           ServiceTimeCard(
                             estimate: status.prediction!,
                             anchor: snapshot.fetchedAt,
+                            waitedSeconds: status.waitTimeSeconds,
                           ),
                           const SizedBox(height: 16),
                         ],
