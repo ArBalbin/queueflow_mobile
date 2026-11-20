@@ -13,6 +13,7 @@ import '../services/queue_session_store.dart';
 import '../services/student_session_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/join_payment_sheet.dart';
+import '../widgets/live_wait.dart';
 import '../widgets/now_serving_card.dart';
 import '../widgets/shared_widgets.dart';
 
@@ -414,7 +415,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               const SizedBox(height: 8),
               _StatsCard(
                 inLine: prediction == null ? '—' : '${prediction.queueLength}',
-                wait: prediction == null ? '—' : prediction.newArrivalWaitLabel,
+                // Minutes and seconds for someone getting a number now.
+                wait: prediction == null
+                    ? '—'
+                    : formatClock(prediction.newArrivalWaitSeconds),
                 counters: prediction == null
                     ? '—'
                     : '${prediction.activeCounters}',
@@ -582,7 +586,7 @@ class _StatsCard extends StatelessWidget {
           ),
           const _StatDivider(),
           Expanded(
-            child: _StatColumn(value: wait, label: 'Est. wait'),
+            child: _StatColumn(value: wait, label: 'Est. wait (min:sec)'),
           ),
           const _StatDivider(),
           Expanded(

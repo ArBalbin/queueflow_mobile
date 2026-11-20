@@ -64,6 +64,20 @@ class QueueEstimate {
   final String? estimatedServiceFinishAt;
   final double estimatedServiceTimeMinutes;
 
+  /// The wait to the second, worked out again by the server on every request.
+  /// The app counts it down between requests.
+  final int estimatedWaitSeconds;
+
+  /// The clock time this student's turn is expected, e.g. "2:41:30 PM".
+  final String estimatedServiceStartLabel;
+
+  /// The current average service time, e.g. 117 s from the "last 4 services".
+  final int avgServiceSeconds;
+  final String avgServiceBasis;
+
+  /// Why the time is moving later, when a window is running long; else empty.
+  final String adjustmentNote;
+
   const QueueEstimate({
     required this.position,
     required this.estimatedWaitMinutes,
@@ -72,12 +86,18 @@ class QueueEstimate {
     required this.estimatedServiceStartAt,
     required this.estimatedServiceFinishAt,
     required this.estimatedServiceTimeMinutes,
+    this.estimatedWaitSeconds = 0,
+    this.estimatedServiceStartLabel = '',
+    this.avgServiceSeconds = 0,
+    this.avgServiceBasis = '',
+    this.adjustmentNote = '',
   });
 
   factory QueueEstimate.fromJson(Map<String, dynamic> json) {
     final waitMinutes = _readDouble(
       json['estimated_wait_time_minutes'] ?? json['estimated_wait_time'],
     );
+    final serviceMinutes = _readDouble(json['estimated_service_time_min'], 0);
 
     return QueueEstimate(
       position: _readInt(json['position']),
@@ -89,10 +109,21 @@ class QueueEstimate {
       estimatedWaitRangeLabel: _readString(json['estimated_wait_range_label']),
       estimatedServiceStartAt: json['estimated_service_start_at']?.toString(),
       estimatedServiceFinishAt: json['estimated_service_finish_at']?.toString(),
-      estimatedServiceTimeMinutes: _readDouble(
-        json['estimated_service_time_min'],
-        0,
+      estimatedServiceTimeMinutes: serviceMinutes,
+      // An older server sends minutes only.
+      estimatedWaitSeconds: _readInt(
+        json['estimated_wait_seconds'],
+        (waitMinutes * 60).round(),
       ),
+      estimatedServiceStartLabel: _readString(
+        json['estimated_service_start_label'],
+      ),
+      avgServiceSeconds: _readInt(
+        json['avg_service_seconds'],
+        (serviceMinutes * 60).round(),
+      ),
+      avgServiceBasis: _readString(json['avg_service_basis']),
+      adjustmentNote: _readString(json['adjustment_note']),
     );
   }
 }
@@ -118,6 +149,11 @@ class QueueStatus {
   final double? paymentAmount;
   final String? paymentNote;
 
+  /// Called to a window: how long ago (when the server answered), and how
+  /// long the student has to reach it.
+  final int? secondsAtCounter;
+  final int arriveWithinSeconds;
+
   const QueueStatus({
     required this.queueNumber,
     required this.queueLabel,
@@ -134,6 +170,8 @@ class QueueStatus {
     this.paymentType,
     this.paymentAmount,
     this.paymentNote,
+    this.secondsAtCounter,
+    this.arriveWithinSeconds = 60,
   });
 
   factory QueueStatus.fromJson(Map<String, dynamic> json) {
@@ -168,6 +206,10 @@ class QueueStatus {
           ? (json['payment_amount'] as num).toDouble()
           : null,
       paymentNote: json['payment_note']?.toString(),
+      secondsAtCounter: json['seconds_at_counter'] is num
+          ? (json['seconds_at_counter'] as num).toInt()
+          : null,
+      arriveWithinSeconds: _readInt(json['arrive_within_seconds'], 60),
     );
   }
 
@@ -211,6 +253,8 @@ class QueueStatus {
       paymentType: paymentType,
       paymentAmount: paymentAmount,
       paymentNote: paymentNote,
+      secondsAtCounter: secondsAtCounter,
+      arriveWithinSeconds: arriveWithinSeconds,
     );
   }
 }
@@ -269,14 +313,24 @@ class NowServing {
   final int queueNumber;
   final String queueLabel;
 
+  /// How long the student at this window had been there when the server
+  /// answered; null from an older server.
+  final int? servingSeconds;
+
+  /// Longer than the current average service time.
+  final bool runningLong;
+
   const NowServing({
     required this.counterNumber,
     required this.queueNumber,
     required this.queueLabel,
+    this.servingSeconds,
+    this.runningLong = false,
   });
 
   factory NowServing.fromJson(Map<String, dynamic> json) {
     final queueNumber = _readInt(json['queue_number']);
+    final serving = json['serving_seconds'];
     return NowServing(
       counterNumber: _readInt(json['counter_number']),
       queueNumber: queueNumber,
@@ -284,6 +338,8 @@ class NowServing {
         json['queue_label'],
         formatQueueLabel(queueNumber),
       ),
+      servingSeconds: serving is num ? serving.toInt() : null,
+      runningLong: _readBool(json['running_long']),
     );
   }
 }
@@ -307,7 +363,18 @@ class QueuePrediction {
   /// Set while staff have closed every window (lunch), in local time.
   final DateTime? countersClosedUntil;
 
-  const QueuePrediction({
+  /// The wait for someone joining now, to the second.
+  final int newArrivalWaitSeconds;
+
+  /// The current average service time and what it is based on.
+  final int avgServiceSeconds;
+  final String avgServiceLabel;
+  final String avgServiceBasis;
+
+  /// When this phone received it, so times can be counted on from there.
+  final DateTime receivedAt;
+
+  QueuePrediction({
     required this.queueLength,
     required this.activeCounters,
     required this.dataStatus,
@@ -316,7 +383,12 @@ class QueuePrediction {
     this.newArrivalWaitMinutes = 0,
     this.nowServing = const [],
     this.countersClosedUntil,
-  });
+    this.newArrivalWaitSeconds = 0,
+    this.avgServiceSeconds = 0,
+    this.avgServiceLabel = '',
+    this.avgServiceBasis = '',
+    DateTime? receivedAt,
+  }) : receivedAt = receivedAt ?? DateTime.now();
 
   factory QueuePrediction.fromJson(Map<String, dynamic> json) {
     final rawQueue = json['active_queue'];
@@ -338,6 +410,12 @@ class QueuePrediction {
     final waitMinutes = newArrival is Map
         ? _readDouble(newArrival['estimated_wait_time_minutes'])
         : 0.0;
+    final waitSeconds = newArrival is Map
+        ? _readInt(
+            newArrival['estimated_wait_seconds'],
+            (waitMinutes * 60).round(),
+          )
+        : 0;
 
     final rawServing = json['now_serving'];
     final serving = rawServing is List
@@ -367,11 +445,18 @@ class QueuePrediction {
       newArrivalWaitMinutes: waitMinutes,
       nowServing: serving,
       countersClosedUntil: closedUntil,
+      newArrivalWaitSeconds: waitSeconds,
+      avgServiceSeconds: _readInt(
+        json['avg_service_seconds'],
+        (_readDouble(json['avg_service_time_min']) * 60).round(),
+      ),
+      avgServiceLabel: _readString(json['avg_service_label']),
+      avgServiceBasis: _readString(json['avg_service_basis']),
     );
   }
 
   factory QueuePrediction.empty() {
-    return const QueuePrediction(
+    return QueuePrediction(
       queueLength: 0,
       activeCounters: 0,
       dataStatus: 'unknown',

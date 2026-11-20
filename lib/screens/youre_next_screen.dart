@@ -6,6 +6,7 @@ import '../services/queue_api.dart';
 import '../services/queue_navigation.dart';
 import '../services/queue_session_store.dart';
 import '../theme/app_theme.dart';
+import '../widgets/live_wait.dart';
 import '../widgets/now_serving_card.dart';
 import '../widgets/shared_widgets.dart';
 
@@ -278,9 +279,24 @@ class _NextBody extends StatelessWidget {
                                 Expanded(
                                   child: _StatChip(
                                     icon: Icons.schedule_rounded,
-                                    value:
-                                        '${_waitValue(status.estimatedWaitMinutes)} min',
+                                    value: '',
                                     label: 'Est. wait',
+                                    child: LiveCountdown(
+                                      seconds: status
+                                              .prediction
+                                              ?.estimatedWaitSeconds ??
+                                          0,
+                                      anchor: snapshot.fetchedAt,
+                                      zeroText: 'any moment',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.dark,
+                                        fontFeatures: [
+                                          FontFeature.tabularFigures(),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -351,6 +367,13 @@ class _NextBody extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
+                        if (status.prediction != null && !status.isBeingServed) ...[
+                          ServiceTimeCard(
+                            estimate: status.prediction!,
+                            anchor: snapshot.fetchedAt,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                         NowServingCard(
                           prediction: snapshot.prediction,
                           myQueueNumber: status.queueNumber,
@@ -491,21 +514,20 @@ class _NextBody extends StatelessWidget {
     );
   }
 
-  // Rounded the same way as the server's label (see queue_waiting_screen).
-  String _waitValue(double minutes) {
-    if (minutes < 1) return '<1';
-    return '~${minutes.round()}';
-  }
 }
 
 class _StatChip extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
+
+  /// Shown instead of [value] when given, e.g. a live countdown.
+  final Widget? child;
   const _StatChip({
     required this.icon,
     required this.value,
     required this.label,
+    this.child,
   });
 
   @override
@@ -528,14 +550,15 @@ class _StatChip extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: AppColors.green),
           const SizedBox(height: 4),
-          AnimatedValueText(
-            value,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.dark,
-            ),
-          ),
+          child ??
+              AnimatedValueText(
+                value,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.dark,
+                ),
+              ),
           const SizedBox(height: 2),
           Text(
             label,

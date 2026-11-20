@@ -9,6 +9,7 @@ import '../services/queue_navigation.dart';
 import '../services/queue_session_store.dart';
 import '../services/turn_notice.dart';
 import '../theme/app_theme.dart';
+import '../widgets/live_wait.dart';
 import '../widgets/now_serving_card.dart';
 import '../widgets/shared_widgets.dart';
 
@@ -29,7 +30,7 @@ class _QueueWaitingScreenState extends State<QueueWaitingScreen> {
   void initState() {
     super.initState();
     _refresh(showSpinner: _snapshot == null);
-    _pollTimer = Timer.periodic(const Duration(seconds: 6), (_) => _refresh());
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _refresh());
     // So the "your turn is near" heads-up can reach a phone in a pocket.
     TurnNotifier.requestPermission();
   }
@@ -339,10 +340,24 @@ class _WaitingBody extends StatelessWidget {
                                   ),
                                   Expanded(
                                     child: _StatColumn(
-                                      value: _waitValue(
-                                        status.estimatedWaitMinutes,
+                                      value: '',
+                                      label: 'Est. wait (min:sec)',
+                                      child: LiveCountdown(
+                                        seconds: status
+                                                .prediction
+                                                ?.estimatedWaitSeconds ??
+                                            0,
+                                        anchor: snapshot.fetchedAt,
+                                        zeroText: 'any moment',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.dark,
+                                          fontFeatures: [
+                                            FontFeature.tabularFigures(),
+                                          ],
+                                        ),
                                       ),
-                                      label: 'Est. wait (min)',
                                     ),
                                   ),
                                   Container(
@@ -391,6 +406,13 @@ class _WaitingBody extends StatelessWidget {
                             borderColor: AppColors.amberBright,
                             dotColor: AppColors.amberBright,
                             textColor: AppColors.amberText,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        if (status.prediction != null) ...[
+                          ServiceTimeCard(
+                            estimate: status.prediction!,
+                            anchor: snapshot.fetchedAt,
                           ),
                           const SizedBox(height: 16),
                         ],
@@ -506,32 +528,30 @@ class _WaitingBody extends StatelessWidget {
     }).toList();
   }
 
-  // Rounded the same way as the server's label, so this figure and
-  // "3 mins" beside it never disagree (rounding up showed 1.1 as ~2).
-  String _waitValue(double minutes) {
-    if (minutes < 1) return '<1';
-    return '~${minutes.round()}';
-  }
 }
 
 class _StatColumn extends StatelessWidget {
   final String value;
   final String label;
-  const _StatColumn({required this.value, required this.label});
+
+  /// Shown instead of [value] when given, e.g. a live countdown.
+  final Widget? child;
+  const _StatColumn({required this.value, required this.label, this.child});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AnimatedValueText(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.dark,
-          ),
-        ),
+        child ??
+            AnimatedValueText(
+              value,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.dark,
+              ),
+            ),
         const SizedBox(height: 2),
         Text(
           label,

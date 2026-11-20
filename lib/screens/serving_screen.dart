@@ -9,6 +9,7 @@ import '../services/queue_api.dart';
 import '../services/queue_navigation.dart';
 import '../services/queue_session_store.dart';
 import '../theme/app_theme.dart';
+import '../widgets/live_wait.dart';
 import '../widgets/shared_widgets.dart';
 
 /// Shown once the student's number is called to a window: which window to go
@@ -22,6 +23,10 @@ class ServingScreen extends StatefulWidget {
 }
 
 class _ServingScreenState extends State<ServingScreen> {
+  /// Numbers whose student said they are at the window, so the countdown
+  /// stays hidden if this screen is opened again.
+  static final Set<int> _arrived = {};
+
   Timer? _pollTimer;
   QueueSnapshot? _snapshot = QueueSessionStore.latestSnapshot;
   bool _isRefreshing = false;
@@ -145,6 +150,19 @@ class _ServingScreenState extends State<ServingScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+              if (status != null &&
+                  status.secondsAtCounter != null &&
+                  !_arrived.contains(status.queueNumber)) ...[
+                _ArriveTimer(
+                  window: window,
+                  secondsSinceCalled: status.secondsAtCounter!,
+                  limitSeconds: status.arriveWithinSeconds,
+                  anchor: _snapshot!.fetchedAt,
+                  onArrived: () =>
+                      setState(() => _arrived.add(status.queueNumber)),
+                ),
+                const SizedBox(height: 12),
+              ],
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -254,6 +272,122 @@ class _ServingScreenState extends State<ServingScreen> {
           }
         },
       ),
+    );
+  }
+}
+
+/// The time the student has to reach their window, counted down from the
+/// moment it was called. When it runs out the student is told to hurry; the
+/// number is not skipped by the app. Staff decide that at the window.
+class _ArriveTimer extends StatelessWidget {
+  final int? window;
+  final int secondsSinceCalled;
+  final int limitSeconds;
+  final DateTime anchor;
+  final VoidCallback onArrived;
+
+  const _ArriveTimer({
+    required this.window,
+    required this.secondsSinceCalled,
+    required this.limitSeconds,
+    required this.anchor,
+    required this.onArrived,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final place = window == null ? 'the window' : 'Window $window';
+    return Ticking(
+      anchor: anchor,
+      builder: (context, since) {
+        final left = limitSeconds - (secondsSinceCalled + since);
+        final over = left <= 0;
+        final hurry = !over && left <= 15;
+        final fg = over
+            ? AppColors.redDark
+            : hurry
+            ? AppColors.amberText
+            : AppColors.greenDark;
+        final bg = over
+            ? AppColors.redLight
+            : hurry
+            ? AppColors.amberLight
+            : AppColors.greenLight;
+        final total = limitSeconds <= 0 ? 1 : limitSeconds;
+        final progress = over ? 0.0 : (left / total).clamp(0.0, 1.0);
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    over ? Icons.directions_run_rounded : Icons.timer_rounded,
+                    size: 18,
+                    color: fg,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      over ? 'Time is up' : 'Reach $place within',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: fg,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    over ? '+${formatClock(-left)}' : formatClock(left),
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: fg,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 6,
+                  backgroundColor: AppColors.white,
+                  valueColor: AlwaysStoppedAnimation<Color>(fg),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                over
+                    ? 'Go to $place now. Staff may skip a number that does not '
+                          'come to its window.'
+                    : 'Your number was called. Go to $place with your payment '
+                          'before the time runs out.',
+                style: TextStyle(fontSize: 13, color: fg, height: 1.4),
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: onArrived,
+                  icon: Icon(Icons.check_circle_rounded, size: 18, color: fg),
+                  label: Text(
+                    "I'm at the window",
+                    style: TextStyle(fontWeight: FontWeight.w700, color: fg),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
