@@ -277,7 +277,7 @@ class _WindowClock extends StatelessWidget {
         final total = limitSeconds <= 0 ? 1 : limitSeconds;
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(16),
@@ -332,24 +332,24 @@ class _WindowClock extends StatelessWidget {
                     valueColor: AlwaysStoppedAnimation<Color>(color),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: onArrived,
-                    icon: const Icon(
-                      Icons.check_circle_rounded,
-                      size: 18,
-                      color: AppColors.green,
-                    ),
-                    label: const Text(
-                      "I'm at the window",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.green,
-                      ),
-                    ),
+                const SizedBox(height: 14),
+                // A filled button, like Get a Queue Number: as plain green
+                // text in the corner, students did not see it was a button.
+                SizedBox(
+                  width: double.infinity,
+                  child: PrimaryButton(
+                    label: "I'm at the window",
+                    bg: AppColors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    fontSize: 15,
+                    onTap: onArrived,
                   ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Tap when you reach the window.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: AppColors.textMuted),
                 ),
               ],
             ],
